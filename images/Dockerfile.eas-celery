@@ -7,14 +7,8 @@ ENV VENV=$VENV_ROOT/$APP_NAME
 RUN git clone --depth 1 https://github.com/alphagov/emergency-alerts-utils.git $APP_ROOT/emergency-alerts-utils
 RUN git clone --depth 1 https://github.com/alphagov/emergency-alerts-api.git $APP_ROOT/emergency-alerts-api
 
-# Copy service file
-# COPY resources/$APP_NAME.service /etc/systemd/system
-
 # Copy configuration files
 COPY config/api/ $APP_ROOT/emergency-alerts-api/
-
-# Copy startup script
-# COPY resources/start.sh $APP_ROOT/$APP_NAME/
 
 # Build emergency-alerts-utils
 RUN $PYTHON_VERSION -m venv $VENV_ROOT/eas-utils
@@ -28,4 +22,4 @@ RUN cd $APP_ROOT/emergency-alerts-api && . $VENV/bin/activate && make bootstrap
 
 # CMD bash $APP_ROOT/$APP_NAME/start.sh $APP_NAME
 CMD . /venv/eas-celery/bin/activate && cd /eas/emergency-alerts-api && make run-celery
-EXPOSE 8125
+# EXPOSE 8125
