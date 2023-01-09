@@ -8,13 +8,13 @@ RUN git clone --depth 1 https://github.com/alphagov/emergency-alerts-utils.git $
 RUN git clone --depth 1 https://github.com/alphagov/emergency-alerts-api.git $APP_ROOT/emergency-alerts-api
 
 # Copy service file
-COPY resources/eas-api.service /etc/systemd/system
+# COPY resources/eas-api.service /etc/systemd/system
 
 # Copy configuration files
 COPY config/api/ $APP_ROOT/emergency-alerts-api/
 
 # Copy startup script
-COPY resources/start.sh $APP_ROOT/
+# COPY resources/start.sh $APP_ROOT/
 
 # Build emergency-alerts-utils
 RUN $PYTHON_VERSION -m venv $VENV_ROOT/eas-utils
@@ -27,5 +27,6 @@ RUN cd $APP_ROOT/emergency-alerts-api && . $VENV/bin/activate && pip3 install wh
 RUN cd $APP_ROOT/emergency-alerts-api && . $VENV/bin/activate && make bootstrap
 RUN cp $APP_ROOT/emergency-alerts-api/app/config.py $APP_ROOT/emergency-alerts-api/app/config.py.bak && cat $APP_ROOT/emergency-alerts-api/app/config.py.bak | sed -e 's/NOTIFY_EMAIL_DOMAIN.*."notify.tools"/NOTIFY_EMAIL_DOMAIN = "fujitsu.com"/' -e "s/NOTIFY_EMAIL_DOMAIN.*.'notify.tools'/NOTIFY_EMAIL_DOMAIN = 'fujitsu.com'/" > $APP_ROOT/emergency-alerts-api/app/config.py
 
-CMD bash $APP_ROOT/start.sh $APP_NAME
+# CMD bash $APP_ROOT/start.sh $APP_NAME
+CMD . /venv/eas-api/bin/activate && cd /eas/emergency-alerts-api && . /eas/emergency-alerts-api/environment.sh && flask run -p 6011 --host=0.0.0.0
 EXPOSE 6011

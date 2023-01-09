@@ -26,5 +26,5 @@ RUN service postgresql start && \
 
 USER root
 
-CMD bash $APP_ROOT/startdb.sh
+CMD bash $APP_ROOT/startdb.sh && tail -F /var/log/journal/*
 EXPOSE 5432

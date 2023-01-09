@@ -8,13 +8,13 @@ RUN git clone --depth 1 https://github.com/alphagov/emergency-alerts-utils.git $
 RUN git clone --depth 1 https://github.com/alphagov/emergency-alerts-admin.git $APP_ROOT/emergency-alerts-admin
 
 # Copy service file
-COPY resources/$APP_NAME.service /etc/systemd/system
+# COPY resources/$APP_NAME.service /etc/systemd/system
 
 # Copy configuration files
 COPY config/admin/ $APP_ROOT/emergency-alerts-admin/
 
 # Copy startup script
-COPY resources/start.sh $APP_ROOT/
+# COPY resources/start.sh $APP_ROOT/
 
 # Build emergency-alerts-utils
 RUN $PYTHON_VERSION -m venv $VENV_ROOT/eas-utils
@@ -27,5 +27,6 @@ RUN cd $APP_ROOT/emergency-alerts-admin && . $VENV/bin/activate && pip3 install 
 RUN cd $APP_ROOT/emergency-alerts-admin && . $VENV/bin/activate && make bootstrap
 RUN echo 'fujitsu.com' >> $APP_ROOT/emergency-alerts-admin/app/utils/email_domains.txt
 
-CMD bash $APP_ROOT/start.sh $APP_NAME
+# CMD bash $APP_ROOT/start.sh $APP_NAME
+CMD . /venv/eas-admin/bin/activate && cd /eas/emergency-alerts-admin && . /eas/emergency-alerts-admin/environment.sh && flask run -p 6012 --host=0.0.0.0
 EXPOSE 6012

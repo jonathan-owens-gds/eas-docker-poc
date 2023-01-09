@@ -1,7 +1,7 @@
 export NOTIFY_ENVIRONMENT='development'
 
 export FLASK_APP=application.py
-export FLASK_ENV=development
+export FLASK_DEBUG=True
 export WERKZEUG_DEBUG_PIN=off
 
 export MMG_API_KEY='MMG_API_KEY'
