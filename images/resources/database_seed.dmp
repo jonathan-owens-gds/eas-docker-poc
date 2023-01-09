@@ -1,0 +1,4749 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 11.17 (Ubuntu 11.17-1.pgdg20.04+1)
+-- Dumped by pg_dump version 11.17 (Ubuntu 11.17-1.pgdg20.04+1)
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: invited_users_status_types; Type: TYPE; Schema: public; Owner: root
+--
+
+CREATE TYPE public.invited_users_status_types AS ENUM (
+    'pending',
+    'accepted',
+    'cancelled'
+);
+
+
+ALTER TYPE public.invited_users_status_types OWNER TO root;
+
+--
+-- Name: job_status_types; Type: TYPE; Schema: public; Owner: root
+--
+
+CREATE TYPE public.job_status_types AS ENUM (
+    'pending',
+    'in progress',
+    'finished',
+    'sending limits exceeded'
+);
+
+
+ALTER TYPE public.job_status_types OWNER TO root;
+
+--
+-- Name: notification_type; Type: TYPE; Schema: public; Owner: root
+--
+
+CREATE TYPE public.notification_type AS ENUM (
+    'email',
+    'sms',
+    'letter'
+);
+
+
+ALTER TYPE public.notification_type OWNER TO root;
+
+--
+-- Name: notify_status_type; Type: TYPE; Schema: public; Owner: root
+--
+
+CREATE TYPE public.notify_status_type AS ENUM (
+    'created',
+    'sending',
+    'delivered',
+    'pending',
+    'failed',
+    'technical-failure',
+    'temporary-failure',
+    'permanent-failure',
+    'sent'
+);
+
+
+ALTER TYPE public.notify_status_type OWNER TO root;
+
+--
+-- Name: permission_types; Type: TYPE; Schema: public; Owner: root
+--
+
+CREATE TYPE public.permission_types AS ENUM (
+    'manage_users',
+    'manage_templates',
+    'manage_settings',
+    'send_texts',
+    'send_emails',
+    'send_letters',
+    'manage_api_keys',
+    'platform_admin',
+    'view_activity',
+    'create_broadcasts',
+    'approve_broadcasts',
+    'cancel_broadcasts',
+    'reject_broadcasts'
+);
+
+
+ALTER TYPE public.permission_types OWNER TO root;
+
+--
+-- Name: recipient_type; Type: TYPE; Schema: public; Owner: root
+--
+
+CREATE TYPE public.recipient_type AS ENUM (
+    'mobile',
+    'email'
+);
+
+
+ALTER TYPE public.recipient_type OWNER TO root;
+
+--
+-- Name: template_type; Type: TYPE; Schema: public; Owner: root
+--
+
+CREATE TYPE public.template_type AS ENUM (
+    'sms',
+    'email',
+    'letter',
+    'broadcast'
+);
+
+
+ALTER TYPE public.template_type OWNER TO root;
+
+--
+-- Name: verify_code_types; Type: TYPE; Schema: public; Owner: root
+--
+
+CREATE TYPE public.verify_code_types AS ENUM (
+    'email',
+    'sms'
+);
+
+
+ALTER TYPE public.verify_code_types OWNER TO root;
+
+SET default_tablespace = '';
+
+SET default_with_oids = false;
+
+--
+-- Name: alembic_version; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.alembic_version (
+    version_num character varying(32) NOT NULL
+);
+
+
+ALTER TABLE public.alembic_version OWNER TO root;
+
+--
+-- Name: annual_billing; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.annual_billing (
+    id uuid NOT NULL,
+    service_id uuid NOT NULL,
+    financial_year_start integer NOT NULL,
+    free_sms_fragment_limit integer NOT NULL,
+    updated_at timestamp without time zone,
+    created_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.annual_billing OWNER TO root;
+
+--
+-- Name: api_keys; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.api_keys (
+    id uuid NOT NULL,
+    name character varying(255) NOT NULL,
+    secret character varying(255) NOT NULL,
+    service_id uuid NOT NULL,
+    expiry_date timestamp without time zone,
+    created_at timestamp without time zone NOT NULL,
+    created_by_id uuid NOT NULL,
+    updated_at timestamp without time zone,
+    version integer NOT NULL,
+    key_type character varying(255) NOT NULL
+);
+
+
+ALTER TABLE public.api_keys OWNER TO root;
+
+--
+-- Name: api_keys_history; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.api_keys_history (
+    id uuid NOT NULL,
+    name character varying(255) NOT NULL,
+    secret character varying(255) NOT NULL,
+    service_id uuid NOT NULL,
+    expiry_date timestamp without time zone,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone,
+    created_by_id uuid NOT NULL,
+    version integer NOT NULL,
+    key_type character varying(255) NOT NULL
+);
+
+
+ALTER TABLE public.api_keys_history OWNER TO root;
+
+--
+-- Name: auth_type; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.auth_type (
+    name character varying NOT NULL
+);
+
+
+ALTER TABLE public.auth_type OWNER TO root;
+
+--
+-- Name: branding_type; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.branding_type (
+    name character varying(255) NOT NULL
+);
+
+
+ALTER TABLE public.branding_type OWNER TO root;
+
+--
+-- Name: broadcast_channel_types; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.broadcast_channel_types (
+    name character varying(255) NOT NULL
+);
+
+
+ALTER TABLE public.broadcast_channel_types OWNER TO root;
+
+--
+-- Name: broadcast_event; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.broadcast_event (
+    id uuid NOT NULL,
+    service_id uuid,
+    broadcast_message_id uuid NOT NULL,
+    sent_at timestamp without time zone NOT NULL,
+    message_type character varying NOT NULL,
+    transmitted_content jsonb,
+    transmitted_areas jsonb NOT NULL,
+    transmitted_sender character varying NOT NULL,
+    transmitted_starts_at timestamp without time zone,
+    transmitted_finishes_at timestamp without time zone
+);
+
+
+ALTER TABLE public.broadcast_event OWNER TO root;
+
+--
+-- Name: broadcast_message; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.broadcast_message (
+    id uuid NOT NULL,
+    service_id uuid,
+    template_id uuid,
+    template_version integer,
+    _personalisation character varying,
+    areas jsonb NOT NULL,
+    status character varying NOT NULL,
+    starts_at timestamp without time zone,
+    finishes_at timestamp without time zone,
+    created_at timestamp without time zone NOT NULL,
+    approved_at timestamp without time zone,
+    cancelled_at timestamp without time zone,
+    updated_at timestamp without time zone,
+    created_by_id uuid,
+    approved_by_id uuid,
+    cancelled_by_id uuid,
+    content text,
+    reference character varying(255),
+    stubbed boolean NOT NULL,
+    cap_event character varying(255),
+    created_by_api_key_id uuid,
+    cancelled_by_api_key_id uuid,
+    CONSTRAINT ck_broadcast_message_created_by_not_null CHECK (((created_by_id IS NOT NULL) OR (created_by_api_key_id IS NOT NULL)))
+);
+
+
+ALTER TABLE public.broadcast_message OWNER TO root;
+
+--
+-- Name: broadcast_provider_message; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.broadcast_provider_message (
+    id uuid NOT NULL,
+    broadcast_event_id uuid,
+    provider character varying,
+    status character varying,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone
+);
+
+
+ALTER TABLE public.broadcast_provider_message OWNER TO root;
+
+--
+-- Name: broadcast_provider_message_number_seq; Type: SEQUENCE; Schema: public; Owner: root
+--
+
+CREATE SEQUENCE public.broadcast_provider_message_number_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.broadcast_provider_message_number_seq OWNER TO root;
+
+--
+-- Name: broadcast_provider_message_number; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.broadcast_provider_message_number (
+    broadcast_provider_message_number integer DEFAULT nextval('public.broadcast_provider_message_number_seq'::regclass) NOT NULL,
+    broadcast_provider_message_id uuid NOT NULL
+);
+
+
+ALTER TABLE public.broadcast_provider_message_number OWNER TO root;
+
+--
+-- Name: broadcast_provider_message_status_type; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.broadcast_provider_message_status_type (
+    name character varying NOT NULL
+);
+
+
+ALTER TABLE public.broadcast_provider_message_status_type OWNER TO root;
+
+--
+-- Name: broadcast_provider_types; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.broadcast_provider_types (
+    name character varying(255) NOT NULL
+);
+
+
+ALTER TABLE public.broadcast_provider_types OWNER TO root;
+
+--
+-- Name: broadcast_status_type; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.broadcast_status_type (
+    name character varying NOT NULL
+);
+
+
+ALTER TABLE public.broadcast_status_type OWNER TO root;
+
+--
+-- Name: complaints; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.complaints (
+    id uuid NOT NULL,
+    notification_id uuid NOT NULL,
+    service_id uuid NOT NULL,
+    ses_feedback_id text,
+    complaint_type text,
+    complaint_date timestamp without time zone,
+    created_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.complaints OWNER TO root;
+
+--
+-- Name: daily_sorted_letter; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.daily_sorted_letter (
+    id uuid NOT NULL,
+    billing_day date NOT NULL,
+    unsorted_count integer NOT NULL,
+    sorted_count integer NOT NULL,
+    updated_at timestamp without time zone,
+    file_name character varying
+);
+
+
+ALTER TABLE public.daily_sorted_letter OWNER TO root;
+
+--
+-- Name: domain; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.domain (
+    domain character varying(255) NOT NULL,
+    organisation_id uuid NOT NULL
+);
+
+
+ALTER TABLE public.domain OWNER TO root;
+
+--
+-- Name: email_branding; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.email_branding (
+    id uuid NOT NULL,
+    colour character varying(7),
+    logo character varying(255),
+    name character varying(255) NOT NULL,
+    text character varying(255),
+    brand_type character varying(255) NOT NULL
+);
+
+
+ALTER TABLE public.email_branding OWNER TO root;
+
+--
+-- Name: email_branding_to_organisation; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.email_branding_to_organisation (
+    organisation_id uuid NOT NULL,
+    email_branding_id uuid NOT NULL
+);
+
+
+ALTER TABLE public.email_branding_to_organisation OWNER TO root;
+
+--
+-- Name: events; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.events (
+    id uuid NOT NULL,
+    event_type character varying(255) NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    data json NOT NULL
+);
+
+
+ALTER TABLE public.events OWNER TO root;
+
+--
+-- Name: ft_billing; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.ft_billing (
+    bst_date date NOT NULL,
+    template_id uuid NOT NULL,
+    service_id uuid NOT NULL,
+    notification_type text NOT NULL,
+    provider text NOT NULL,
+    rate_multiplier integer NOT NULL,
+    international boolean NOT NULL,
+    rate numeric NOT NULL,
+    billable_units integer,
+    notifications_sent integer,
+    updated_at timestamp without time zone,
+    created_at timestamp without time zone NOT NULL,
+    postage character varying NOT NULL
+);
+
+
+ALTER TABLE public.ft_billing OWNER TO root;
+
+--
+-- Name: ft_notification_status; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.ft_notification_status (
+    bst_date date NOT NULL,
+    template_id uuid NOT NULL,
+    service_id uuid NOT NULL,
+    job_id uuid NOT NULL,
+    notification_type text NOT NULL,
+    key_type text NOT NULL,
+    notification_status text NOT NULL,
+    notification_count integer NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone
+);
+
+
+ALTER TABLE public.ft_notification_status OWNER TO root;
+
+--
+-- Name: ft_processing_time; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.ft_processing_time (
+    bst_date date NOT NULL,
+    messages_total integer NOT NULL,
+    messages_within_10_secs integer NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone
+);
+
+
+ALTER TABLE public.ft_processing_time OWNER TO root;
+
+--
+-- Name: inbound_numbers; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.inbound_numbers (
+    id uuid NOT NULL,
+    number character varying(11) NOT NULL,
+    provider character varying NOT NULL,
+    service_id uuid,
+    active boolean NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone
+);
+
+
+ALTER TABLE public.inbound_numbers OWNER TO root;
+
+--
+-- Name: inbound_sms; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.inbound_sms (
+    id uuid NOT NULL,
+    service_id uuid NOT NULL,
+    content character varying NOT NULL,
+    notify_number character varying NOT NULL,
+    user_number character varying NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    provider_date timestamp without time zone,
+    provider_reference character varying,
+    provider character varying NOT NULL
+);
+
+
+ALTER TABLE public.inbound_sms OWNER TO root;
+
+--
+-- Name: inbound_sms_history; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.inbound_sms_history (
+    id uuid NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    service_id uuid,
+    notify_number character varying NOT NULL,
+    provider_date timestamp without time zone,
+    provider_reference character varying,
+    provider character varying NOT NULL
+);
+
+
+ALTER TABLE public.inbound_sms_history OWNER TO root;
+
+--
+-- Name: invite_status_type; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.invite_status_type (
+    name character varying NOT NULL
+);
+
+
+ALTER TABLE public.invite_status_type OWNER TO root;
+
+--
+-- Name: invited_organisation_users; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.invited_organisation_users (
+    id uuid NOT NULL,
+    email_address character varying(255) NOT NULL,
+    invited_by_id uuid NOT NULL,
+    organisation_id uuid NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    status character varying NOT NULL
+);
+
+
+ALTER TABLE public.invited_organisation_users OWNER TO root;
+
+--
+-- Name: invited_users; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.invited_users (
+    id uuid NOT NULL,
+    email_address character varying(255) NOT NULL,
+    user_id uuid NOT NULL,
+    service_id uuid,
+    created_at timestamp without time zone NOT NULL,
+    status public.invited_users_status_types NOT NULL,
+    permissions character varying NOT NULL,
+    auth_type character varying DEFAULT 'sms_auth'::character varying NOT NULL,
+    folder_permissions jsonb NOT NULL
+);
+
+
+ALTER TABLE public.invited_users OWNER TO root;
+
+--
+-- Name: job_status; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.job_status (
+    name character varying(255) NOT NULL
+);
+
+
+ALTER TABLE public.job_status OWNER TO root;
+
+--
+-- Name: jobs; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.jobs (
+    id uuid NOT NULL,
+    original_file_name character varying NOT NULL,
+    service_id uuid NOT NULL,
+    template_id uuid,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone,
+    notification_count integer NOT NULL,
+    notifications_sent integer NOT NULL,
+    processing_started timestamp without time zone,
+    processing_finished timestamp without time zone,
+    created_by_id uuid,
+    template_version integer NOT NULL,
+    notifications_delivered integer NOT NULL,
+    notifications_failed integer NOT NULL,
+    job_status character varying(255) NOT NULL,
+    scheduled_for timestamp without time zone,
+    archived boolean DEFAULT false NOT NULL,
+    contact_list_id uuid
+);
+
+
+ALTER TABLE public.jobs OWNER TO root;
+
+--
+-- Name: key_types; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.key_types (
+    name character varying(255) NOT NULL
+);
+
+
+ALTER TABLE public.key_types OWNER TO root;
+
+--
+-- Name: letter_branding; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.letter_branding (
+    id uuid NOT NULL,
+    name character varying(255) NOT NULL,
+    filename character varying(255) NOT NULL
+);
+
+
+ALTER TABLE public.letter_branding OWNER TO root;
+
+--
+-- Name: letter_rates; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.letter_rates (
+    id uuid NOT NULL,
+    start_date timestamp without time zone NOT NULL,
+    end_date timestamp without time zone,
+    sheet_count integer NOT NULL,
+    rate numeric NOT NULL,
+    crown boolean NOT NULL,
+    post_class character varying NOT NULL
+);
+
+
+ALTER TABLE public.letter_rates OWNER TO root;
+
+--
+-- Name: notification_history; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.notification_history (
+    id uuid NOT NULL,
+    job_id uuid,
+    job_row_number integer,
+    service_id uuid,
+    template_id uuid,
+    template_version integer NOT NULL,
+    api_key_id uuid,
+    key_type character varying NOT NULL,
+    notification_type public.notification_type NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    sent_at timestamp without time zone,
+    sent_by character varying,
+    updated_at timestamp without time zone,
+    reference character varying,
+    billable_units integer NOT NULL,
+    client_reference character varying,
+    international boolean,
+    phone_prefix character varying,
+    rate_multiplier numeric,
+    notification_status text,
+    created_by_id uuid,
+    postage character varying,
+    document_download_count integer
+);
+
+
+ALTER TABLE public.notification_history OWNER TO root;
+
+--
+-- Name: notification_status_types; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.notification_status_types (
+    name character varying NOT NULL
+);
+
+
+ALTER TABLE public.notification_status_types OWNER TO root;
+
+--
+-- Name: notifications; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.notifications (
+    id uuid NOT NULL,
+    "to" character varying NOT NULL,
+    job_id uuid,
+    service_id uuid,
+    template_id uuid,
+    created_at timestamp without time zone NOT NULL,
+    sent_at timestamp without time zone,
+    sent_by character varying,
+    updated_at timestamp without time zone,
+    reference character varying,
+    template_version integer NOT NULL,
+    job_row_number integer,
+    _personalisation character varying,
+    api_key_id uuid,
+    key_type character varying(255) NOT NULL,
+    notification_type public.notification_type NOT NULL,
+    billable_units integer NOT NULL,
+    client_reference character varying,
+    international boolean,
+    phone_prefix character varying,
+    rate_multiplier numeric,
+    notification_status text,
+    normalised_to character varying,
+    created_by_id uuid,
+    reply_to_text character varying,
+    postage character varying,
+    document_download_count integer
+);
+
+
+ALTER TABLE public.notifications OWNER TO root;
+
+--
+-- Name: notifications_all_time_view; Type: VIEW; Schema: public; Owner: root
+--
+
+CREATE VIEW public.notifications_all_time_view AS
+ SELECT notifications.id,
+    notifications.job_id,
+    notifications.job_row_number,
+    notifications.service_id,
+    notifications.template_id,
+    notifications.template_version,
+    notifications.api_key_id,
+    notifications.key_type,
+    notifications.billable_units,
+    notifications.notification_type,
+    notifications.created_at,
+    notifications.sent_at,
+    notifications.sent_by,
+    notifications.updated_at,
+    notifications.notification_status,
+    notifications.reference,
+    notifications.client_reference,
+    notifications.international,
+    notifications.phone_prefix,
+    notifications.rate_multiplier,
+    notifications.created_by_id,
+    notifications.postage,
+    notifications.document_download_count
+   FROM public.notifications
+UNION
+ SELECT notification_history.id,
+    notification_history.job_id,
+    notification_history.job_row_number,
+    notification_history.service_id,
+    notification_history.template_id,
+    notification_history.template_version,
+    notification_history.api_key_id,
+    notification_history.key_type,
+    notification_history.billable_units,
+    notification_history.notification_type,
+    notification_history.created_at,
+    notification_history.sent_at,
+    notification_history.sent_by,
+    notification_history.updated_at,
+    notification_history.notification_status,
+    notification_history.reference,
+    notification_history.client_reference,
+    notification_history.international,
+    notification_history.phone_prefix,
+    notification_history.rate_multiplier,
+    notification_history.created_by_id,
+    notification_history.postage,
+    notification_history.document_download_count
+   FROM public.notification_history;
+
+
+ALTER TABLE public.notifications_all_time_view OWNER TO root;
+
+--
+-- Name: organisation; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.organisation (
+    id uuid NOT NULL,
+    name character varying(255) NOT NULL,
+    active boolean NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone,
+    email_branding_id uuid,
+    letter_branding_id uuid,
+    agreement_signed boolean,
+    agreement_signed_at timestamp without time zone,
+    agreement_signed_by_id uuid,
+    agreement_signed_version double precision,
+    crown boolean,
+    organisation_type character varying(255),
+    request_to_go_live_notes text,
+    agreement_signed_on_behalf_of_email_address character varying(255),
+    agreement_signed_on_behalf_of_name character varying(255),
+    billing_contact_email_addresses text,
+    billing_contact_names text,
+    billing_reference character varying(255),
+    notes text,
+    purchase_order_number character varying(255)
+);
+
+
+ALTER TABLE public.organisation OWNER TO root;
+
+--
+-- Name: organisation_types; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.organisation_types (
+    name character varying(255) NOT NULL,
+    is_crown boolean,
+    annual_free_sms_fragment_limit bigint NOT NULL
+);
+
+
+ALTER TABLE public.organisation_types OWNER TO root;
+
+--
+-- Name: permissions; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.permissions (
+    id uuid NOT NULL,
+    service_id uuid,
+    user_id uuid NOT NULL,
+    permission public.permission_types NOT NULL,
+    created_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.permissions OWNER TO root;
+
+--
+-- Name: provider_details; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.provider_details (
+    id uuid NOT NULL,
+    display_name character varying NOT NULL,
+    identifier character varying NOT NULL,
+    priority integer NOT NULL,
+    notification_type public.notification_type NOT NULL,
+    active boolean NOT NULL,
+    updated_at timestamp without time zone,
+    version integer NOT NULL,
+    created_by_id uuid,
+    supports_international boolean DEFAULT false NOT NULL
+);
+
+
+ALTER TABLE public.provider_details OWNER TO root;
+
+--
+-- Name: provider_details_history; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.provider_details_history (
+    id uuid NOT NULL,
+    display_name character varying NOT NULL,
+    identifier character varying NOT NULL,
+    priority integer NOT NULL,
+    notification_type public.notification_type NOT NULL,
+    active boolean NOT NULL,
+    version integer NOT NULL,
+    updated_at timestamp without time zone,
+    created_by_id uuid,
+    supports_international boolean DEFAULT false NOT NULL
+);
+
+
+ALTER TABLE public.provider_details_history OWNER TO root;
+
+--
+-- Name: rates; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.rates (
+    id uuid NOT NULL,
+    valid_from timestamp without time zone NOT NULL,
+    rate numeric NOT NULL,
+    notification_type public.notification_type NOT NULL
+);
+
+
+ALTER TABLE public.rates OWNER TO root;
+
+--
+-- Name: returned_letters; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.returned_letters (
+    id uuid NOT NULL,
+    reported_at date NOT NULL,
+    service_id uuid NOT NULL,
+    notification_id uuid NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone
+);
+
+
+ALTER TABLE public.returned_letters OWNER TO root;
+
+--
+-- Name: service_broadcast_provider_restriction; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.service_broadcast_provider_restriction (
+    service_id uuid NOT NULL,
+    provider character varying NOT NULL,
+    created_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.service_broadcast_provider_restriction OWNER TO root;
+
+--
+-- Name: service_broadcast_settings; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.service_broadcast_settings (
+    service_id uuid NOT NULL,
+    channel character varying(255) NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone,
+    provider character varying NOT NULL
+);
+
+
+ALTER TABLE public.service_broadcast_settings OWNER TO root;
+
+--
+-- Name: service_callback_api; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.service_callback_api (
+    id uuid NOT NULL,
+    service_id uuid NOT NULL,
+    url character varying NOT NULL,
+    bearer_token character varying NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone,
+    updated_by_id uuid NOT NULL,
+    version integer NOT NULL,
+    callback_type character varying
+);
+
+
+ALTER TABLE public.service_callback_api OWNER TO root;
+
+--
+-- Name: service_callback_api_history; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.service_callback_api_history (
+    id uuid NOT NULL,
+    service_id uuid NOT NULL,
+    url character varying NOT NULL,
+    bearer_token character varying NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone,
+    updated_by_id uuid NOT NULL,
+    version integer NOT NULL,
+    callback_type character varying
+);
+
+
+ALTER TABLE public.service_callback_api_history OWNER TO root;
+
+--
+-- Name: service_callback_type; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.service_callback_type (
+    name character varying NOT NULL
+);
+
+
+ALTER TABLE public.service_callback_type OWNER TO root;
+
+--
+-- Name: service_contact_list; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.service_contact_list (
+    id uuid NOT NULL,
+    original_file_name character varying NOT NULL,
+    row_count integer NOT NULL,
+    template_type public.template_type NOT NULL,
+    service_id uuid NOT NULL,
+    created_by_id uuid,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone,
+    archived boolean DEFAULT false NOT NULL
+);
+
+
+ALTER TABLE public.service_contact_list OWNER TO root;
+
+--
+-- Name: service_data_retention; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.service_data_retention (
+    id uuid NOT NULL,
+    service_id uuid NOT NULL,
+    notification_type public.notification_type NOT NULL,
+    days_of_retention integer NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone
+);
+
+
+ALTER TABLE public.service_data_retention OWNER TO root;
+
+--
+-- Name: service_email_branding; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.service_email_branding (
+    service_id uuid NOT NULL,
+    email_branding_id uuid NOT NULL
+);
+
+
+ALTER TABLE public.service_email_branding OWNER TO root;
+
+--
+-- Name: service_email_reply_to; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.service_email_reply_to (
+    id uuid NOT NULL,
+    service_id uuid NOT NULL,
+    email_address text NOT NULL,
+    is_default boolean NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone,
+    archived boolean DEFAULT false NOT NULL
+);
+
+
+ALTER TABLE public.service_email_reply_to OWNER TO root;
+
+--
+-- Name: service_inbound_api; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.service_inbound_api (
+    id uuid NOT NULL,
+    service_id uuid NOT NULL,
+    url character varying NOT NULL,
+    bearer_token character varying NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone,
+    updated_by_id uuid NOT NULL,
+    version integer NOT NULL
+);
+
+
+ALTER TABLE public.service_inbound_api OWNER TO root;
+
+--
+-- Name: service_inbound_api_history; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.service_inbound_api_history (
+    id uuid NOT NULL,
+    service_id uuid NOT NULL,
+    url character varying NOT NULL,
+    bearer_token character varying NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone,
+    updated_by_id uuid NOT NULL,
+    version integer NOT NULL
+);
+
+
+ALTER TABLE public.service_inbound_api_history OWNER TO root;
+
+--
+-- Name: service_letter_branding; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.service_letter_branding (
+    service_id uuid NOT NULL,
+    letter_branding_id uuid NOT NULL
+);
+
+
+ALTER TABLE public.service_letter_branding OWNER TO root;
+
+--
+-- Name: service_letter_contacts; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.service_letter_contacts (
+    id uuid NOT NULL,
+    service_id uuid NOT NULL,
+    contact_block text NOT NULL,
+    is_default boolean NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone,
+    archived boolean DEFAULT false NOT NULL
+);
+
+
+ALTER TABLE public.service_letter_contacts OWNER TO root;
+
+--
+-- Name: service_permission_types; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.service_permission_types (
+    name character varying(255) NOT NULL
+);
+
+
+ALTER TABLE public.service_permission_types OWNER TO root;
+
+--
+-- Name: service_permissions; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.service_permissions (
+    service_id uuid NOT NULL,
+    permission character varying(255) NOT NULL,
+    created_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.service_permissions OWNER TO root;
+
+--
+-- Name: service_sms_senders; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.service_sms_senders (
+    id uuid NOT NULL,
+    sms_sender character varying(11) NOT NULL,
+    service_id uuid NOT NULL,
+    is_default boolean NOT NULL,
+    inbound_number_id uuid,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone,
+    archived boolean DEFAULT false NOT NULL
+);
+
+
+ALTER TABLE public.service_sms_senders OWNER TO root;
+
+--
+-- Name: service_whitelist; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.service_whitelist (
+    id uuid NOT NULL,
+    service_id uuid NOT NULL,
+    recipient_type public.recipient_type NOT NULL,
+    recipient character varying(255) NOT NULL,
+    created_at timestamp without time zone
+);
+
+
+ALTER TABLE public.service_whitelist OWNER TO root;
+
+--
+-- Name: services; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.services (
+    id uuid NOT NULL,
+    name character varying(255) NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone,
+    active boolean NOT NULL,
+    message_limit bigint NOT NULL,
+    restricted boolean NOT NULL,
+    email_from text NOT NULL,
+    created_by_id uuid NOT NULL,
+    version integer NOT NULL,
+    research_mode boolean NOT NULL,
+    organisation_type character varying(255),
+    prefix_sms boolean NOT NULL,
+    crown boolean,
+    rate_limit integer NOT NULL,
+    contact_link character varying(255),
+    consent_to_research boolean,
+    volume_email integer,
+    volume_letter integer,
+    volume_sms integer,
+    count_as_live boolean DEFAULT true NOT NULL,
+    go_live_at timestamp without time zone,
+    go_live_user_id uuid,
+    organisation_id uuid,
+    notes text,
+    billing_contact_email_addresses text,
+    billing_contact_names text,
+    billing_reference character varying(255),
+    purchase_order_number character varying(255)
+);
+
+
+ALTER TABLE public.services OWNER TO root;
+
+--
+-- Name: services_history; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.services_history (
+    id uuid NOT NULL,
+    name character varying(255) NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone,
+    active boolean NOT NULL,
+    message_limit bigint NOT NULL,
+    restricted boolean NOT NULL,
+    email_from text NOT NULL,
+    created_by_id uuid NOT NULL,
+    version integer NOT NULL,
+    research_mode boolean NOT NULL,
+    organisation_type character varying(255),
+    prefix_sms boolean,
+    crown boolean,
+    rate_limit integer NOT NULL,
+    contact_link character varying(255),
+    consent_to_research boolean,
+    volume_email integer,
+    volume_letter integer,
+    volume_sms integer,
+    count_as_live boolean DEFAULT true NOT NULL,
+    go_live_at timestamp without time zone,
+    go_live_user_id uuid,
+    organisation_id uuid,
+    notes text,
+    billing_contact_email_addresses text,
+    billing_contact_names text,
+    billing_reference character varying(255),
+    purchase_order_number character varying(255)
+);
+
+
+ALTER TABLE public.services_history OWNER TO root;
+
+--
+-- Name: template_folder; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.template_folder (
+    id uuid NOT NULL,
+    service_id uuid NOT NULL,
+    name character varying NOT NULL,
+    parent_id uuid
+);
+
+
+ALTER TABLE public.template_folder OWNER TO root;
+
+--
+-- Name: template_folder_map; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.template_folder_map (
+    template_id uuid NOT NULL,
+    template_folder_id uuid NOT NULL
+);
+
+
+ALTER TABLE public.template_folder_map OWNER TO root;
+
+--
+-- Name: template_process_type; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.template_process_type (
+    name character varying(255) NOT NULL
+);
+
+
+ALTER TABLE public.template_process_type OWNER TO root;
+
+--
+-- Name: template_redacted; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.template_redacted (
+    template_id uuid NOT NULL,
+    redact_personalisation boolean NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
+    updated_by_id uuid NOT NULL
+);
+
+
+ALTER TABLE public.template_redacted OWNER TO root;
+
+--
+-- Name: templates; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.templates (
+    id uuid NOT NULL,
+    name character varying(255) NOT NULL,
+    template_type public.template_type NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone,
+    content text NOT NULL,
+    service_id uuid NOT NULL,
+    subject text,
+    created_by_id uuid NOT NULL,
+    version integer NOT NULL,
+    archived boolean NOT NULL,
+    process_type character varying(255) NOT NULL,
+    service_letter_contact_id uuid,
+    hidden boolean NOT NULL,
+    postage character varying,
+    broadcast_data jsonb
+);
+
+
+ALTER TABLE public.templates OWNER TO root;
+
+--
+-- Name: templates_history; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.templates_history (
+    id uuid NOT NULL,
+    name character varying(255) NOT NULL,
+    template_type public.template_type NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone,
+    content text NOT NULL,
+    service_id uuid NOT NULL,
+    subject text,
+    created_by_id uuid NOT NULL,
+    version integer NOT NULL,
+    archived boolean NOT NULL,
+    process_type character varying(255) NOT NULL,
+    service_letter_contact_id uuid,
+    hidden boolean NOT NULL,
+    postage character varying,
+    broadcast_data jsonb
+);
+
+
+ALTER TABLE public.templates_history OWNER TO root;
+
+--
+-- Name: user_folder_permissions; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.user_folder_permissions (
+    user_id uuid NOT NULL,
+    template_folder_id uuid NOT NULL,
+    service_id uuid NOT NULL
+);
+
+
+ALTER TABLE public.user_folder_permissions OWNER TO root;
+
+--
+-- Name: user_to_organisation; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.user_to_organisation (
+    user_id uuid,
+    organisation_id uuid
+);
+
+
+ALTER TABLE public.user_to_organisation OWNER TO root;
+
+--
+-- Name: user_to_service; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.user_to_service (
+    user_id uuid,
+    service_id uuid
+);
+
+
+ALTER TABLE public.user_to_service OWNER TO root;
+
+--
+-- Name: users; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.users (
+    id uuid NOT NULL,
+    name character varying NOT NULL,
+    email_address character varying(255) NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone,
+    _password character varying NOT NULL,
+    mobile_number character varying,
+    password_changed_at timestamp without time zone NOT NULL,
+    logged_in_at timestamp without time zone,
+    failed_login_count integer NOT NULL,
+    state character varying NOT NULL,
+    platform_admin boolean NOT NULL,
+    current_session_id uuid,
+    auth_type character varying DEFAULT 'sms_auth'::character varying NOT NULL,
+    email_access_validated_at timestamp without time zone NOT NULL,
+    CONSTRAINT ck_user_has_mobile_or_other_auth CHECK ((((auth_type)::text = ANY (ARRAY[('email_auth'::character varying)::text, ('webauthn_auth'::character varying)::text])) OR (mobile_number IS NOT NULL)))
+);
+
+
+ALTER TABLE public.users OWNER TO root;
+
+--
+-- Name: verify_codes; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.verify_codes (
+    id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    _code character varying NOT NULL,
+    code_type public.verify_code_types NOT NULL,
+    expiry_datetime timestamp without time zone NOT NULL,
+    code_used boolean,
+    created_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.verify_codes OWNER TO root;
+
+--
+-- Name: webauthn_credential; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.webauthn_credential (
+    id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    name character varying NOT NULL,
+    credential_data character varying NOT NULL,
+    registration_response character varying NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone
+);
+
+
+ALTER TABLE public.webauthn_credential OWNER TO root;
+
+--
+-- Data for Name: alembic_version; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.alembic_version (version_num) FROM stdin;
+0377_populate_org_brand_pools
+\.
+
+
+--
+-- Data for Name: annual_billing; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.annual_billing (id, service_id, financial_year_start, free_sms_fragment_limit, updated_at, created_at) FROM stdin;
+a87f1282-feb3-f20d-bab0-df150213716f	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	2022	250000	2022-10-17 12:41:31.086253	2022-10-17 12:41:31.086252
+1e859301-6b53-43aa-9e5a-0b48a69dd188	9f8e8a80-488c-42d9-90c3-767eaea1e050	2022	40000	\N	2022-10-17 12:57:11.099757
+\.
+
+
+--
+-- Data for Name: api_keys; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.api_keys (id, name, secret, service_id, expiry_date, created_at, created_by_id, updated_at, version, key_type) FROM stdin;
+\.
+
+
+--
+-- Data for Name: api_keys_history; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.api_keys_history (id, name, secret, service_id, expiry_date, created_at, updated_at, created_by_id, version, key_type) FROM stdin;
+\.
+
+
+--
+-- Data for Name: auth_type; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.auth_type (name) FROM stdin;
+email_auth
+sms_auth
+webauthn_auth
+\.
+
+
+--
+-- Data for Name: branding_type; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.branding_type (name) FROM stdin;
+org
+both
+org_banner
+\.
+
+
+--
+-- Data for Name: broadcast_channel_types; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.broadcast_channel_types (name) FROM stdin;
+test
+severe
+government
+operator
+\.
+
+
+--
+-- Data for Name: broadcast_event; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.broadcast_event (id, service_id, broadcast_message_id, sent_at, message_type, transmitted_content, transmitted_areas, transmitted_sender, transmitted_starts_at, transmitted_finishes_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: broadcast_message; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.broadcast_message (id, service_id, template_id, template_version, _personalisation, areas, status, starts_at, finishes_at, created_at, approved_at, cancelled_at, updated_at, created_by_id, approved_by_id, cancelled_by_id, content, reference, stubbed, cap_event, created_by_api_key_id, cancelled_by_api_key_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: broadcast_provider_message; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.broadcast_provider_message (id, broadcast_event_id, provider, status, created_at, updated_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: broadcast_provider_message_number; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.broadcast_provider_message_number (broadcast_provider_message_number, broadcast_provider_message_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: broadcast_provider_message_status_type; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.broadcast_provider_message_status_type (name) FROM stdin;
+technical-failure
+sending
+returned-ack
+returned-error
+\.
+
+
+--
+-- Data for Name: broadcast_provider_types; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.broadcast_provider_types (name) FROM stdin;
+ee
+three
+vodafone
+o2
+all
+\.
+
+
+--
+-- Data for Name: broadcast_status_type; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.broadcast_status_type (name) FROM stdin;
+draft
+pending-approval
+rejected
+broadcasting
+completed
+cancelled
+technical-failure
+\.
+
+
+--
+-- Data for Name: complaints; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.complaints (id, notification_id, service_id, ses_feedback_id, complaint_type, complaint_date, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: daily_sorted_letter; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.daily_sorted_letter (id, billing_day, unsorted_count, sorted_count, updated_at, file_name) FROM stdin;
+\.
+
+
+--
+-- Data for Name: domain; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.domain (domain, organisation_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: email_branding; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.email_branding (id, colour, logo, name, text, brand_type) FROM stdin;
+9d25d02d-2915-4e98-874b-974e123e8536	#9325b2	ho_crest_27px_x2.png	UK Visas & Immigration	UK Visas & Immigration	org
+123496d4-44cb-4324-8e0a-4187101f4bdc		data_gov_uk_x2.png	data gov.uk	data gov.uk	org
+1d70f564-919b-4c68-8bdf-b8520d92516e		tfl_dar_x2.png	tfl	tfl	org
+89ce468b-fb29-4d5d-bd3f-d468fb6f7c36		een_x2.png	een	een	org
+a7dc4e56-660b-4db7-8cff-12c37b12b5ea	\N	1ac6f483-3105-4c9e-9017-dd7fb2752c44-nhs-blue_x2.png	NHS	\N	org
+\.
+
+
+--
+-- Data for Name: email_branding_to_organisation; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.email_branding_to_organisation (organisation_id, email_branding_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: events; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.events (id, event_type, created_at, data) FROM stdin;
+7a52b78a-8cfd-48eb-a9e1-9c290714d413	sucessful_login	2022-10-17 12:45:44.584158	{"ip_address": "172.19.0.1", "browser_fingerprint": {"browser": "chrome", "platform": "windows", "version": "103.0.0.0", "user_agent_string": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"}, "user_id": "eeb7c729-31f1-4c15-97e0-4678f936fd4f"}
+d8accbd0-67d2-42a2-bb15-c843b0315e5b	change_broadcast_account_type	2022-10-17 12:58:46.322682	{"ip_address": "172.19.0.1", "browser_fingerprint": {"browser": "chrome", "platform": "windows", "version": "103.0.0.0", "user_agent_string": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"}, "service_id": "9f8e8a80-488c-42d9-90c3-767eaea1e050", "changed_by_id": "eeb7c729-31f1-4c15-97e0-4678f936fd4f", "service_mode": "training", "broadcast_channel": "test", "provider_restriction": "all"}
+4936fcd5-3369-4e7b-98b6-6f765edcac79	sucessful_login	2022-10-17 15:48:43.995904	{"ip_address": "172.24.0.1", "browser_fingerprint": {"browser": "chrome", "platform": "windows", "version": "103.0.0.0", "user_agent_string": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"}, "user_id": "4cad9e65-5cbb-47ac-aafc-a6b662142e82"}
+6224c0cb-f579-477b-bdc2-4d606327b2b3	add_user_to_service	2022-10-17 15:48:44.108003	{"ip_address": "172.24.0.1", "browser_fingerprint": {"browser": "chrome", "platform": "windows", "version": "103.0.0.0", "user_agent_string": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"}, "user_id": "4cad9e65-5cbb-47ac-aafc-a6b662142e82", "invited_by_id": "eeb7c729-31f1-4c15-97e0-4678f936fd4f", "service_id": "9f8e8a80-488c-42d9-90c3-767eaea1e050", "ui_permissions": ["view_activity", "create_broadcasts", "manage_templates", "approve_broadcasts"]}
+\.
+
+
+--
+-- Data for Name: ft_billing; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.ft_billing (bst_date, template_id, service_id, notification_type, provider, rate_multiplier, international, rate, billable_units, notifications_sent, updated_at, created_at, postage) FROM stdin;
+\.
+
+
+--
+-- Data for Name: ft_notification_status; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.ft_notification_status (bst_date, template_id, service_id, job_id, notification_type, key_type, notification_status, notification_count, created_at, updated_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: ft_processing_time; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.ft_processing_time (bst_date, messages_total, messages_within_10_secs, created_at, updated_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: inbound_numbers; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.inbound_numbers (id, number, provider, service_id, active, created_at, updated_at) FROM stdin;
+adc5ab68-9b75-42ae-a5cd-3cc3746062b3	07984404008	mmg	\N	f	2022-10-17 12:41:29.841793	\N
+\.
+
+
+--
+-- Data for Name: inbound_sms; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.inbound_sms (id, service_id, content, notify_number, user_number, created_at, provider_date, provider_reference, provider) FROM stdin;
+\.
+
+
+--
+-- Data for Name: inbound_sms_history; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.inbound_sms_history (id, created_at, service_id, notify_number, provider_date, provider_reference, provider) FROM stdin;
+\.
+
+
+--
+-- Data for Name: invite_status_type; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.invite_status_type (name) FROM stdin;
+pending
+accepted
+cancelled
+\.
+
+
+--
+-- Data for Name: invited_organisation_users; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.invited_organisation_users (id, email_address, invited_by_id, organisation_id, created_at, status) FROM stdin;
+\.
+
+
+--
+-- Data for Name: invited_users; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.invited_users (id, email_address, user_id, service_id, created_at, status, permissions, auth_type, folder_permissions) FROM stdin;
+94a25421-fe92-494a-ba40-2f2e45b7531a	notify.user@fujitsu.com	eeb7c729-31f1-4c15-97e0-4678f936fd4f	9f8e8a80-488c-42d9-90c3-767eaea1e050	2022-10-17 13:10:09	cancelled	approve_broadcasts,cancel_broadcasts,create_broadcasts,manage_templates,reject_broadcasts,view_activity	sms_auth	[]
+e5a56920-6fe7-46f8-9aea-015dd284b043	notify.user@fujitsu.com	eeb7c729-31f1-4c15-97e0-4678f936fd4f	9f8e8a80-488c-42d9-90c3-767eaea1e050	2022-10-17 13:12:14	accepted	approve_broadcasts,cancel_broadcasts,create_broadcasts,manage_templates,reject_broadcasts,view_activity	sms_auth	[]
+\.
+
+
+--
+-- Data for Name: job_status; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.job_status (name) FROM stdin;
+pending
+in progress
+finished
+sending limits exceeded
+scheduled
+cancelled
+ready to send
+sent to dvla
+error
+\.
+
+
+--
+-- Data for Name: jobs; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.jobs (id, original_file_name, service_id, template_id, created_at, updated_at, notification_count, notifications_sent, processing_started, processing_finished, created_by_id, template_version, notifications_delivered, notifications_failed, job_status, scheduled_for, archived, contact_list_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: key_types; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.key_types (name) FROM stdin;
+normal
+team
+test
+\.
+
+
+--
+-- Data for Name: letter_branding; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.letter_branding (id, name, filename) FROM stdin;
+ff577dcc-bc5b-048a-d017-88ff0139500e	HM Government	hm-government
+12c7df35-4dd7-c14e-6f4d-1915317d4a6b	Office of the Public Guardian	opg
+0482edbe-dada-8a6b-bbdb-21ca541ab3a9	Department for Work and Pensions	dwp
+a4634cb9-362a-cfd7-818b-fe05e0716c55	Government Equalities Office	geo
+6d8f1c36-e687-1692-4933-7bea8f40fdfe	Companies House	ch
+21d70923-12f9-ce09-367f-f60dfd883f6d	DWP (Welsh)	dwp-welsh
+a623f51f-ddf6-9fe7-4433-a86d73558d01	Department for Communities	dept-for-communities
+67b83c80-f6f1-d59d-70ab-538bde608474	Marine Management Organisation	mmo
+2ec972b8-e720-7584-ceb2-2154440f03da	HM Passport Office	hmpo
+36647826-20d4-0387-0912-696f2ba5c8bd	Land Registry	hm-land-registry
+074506ff-135f-9fd1-be1d-d7ae8e424211	Environment Agency (PDF letters ONLY)	ea
+a03bc961-e1e3-e6ed-a162-2ada05d04e6a	Welsh Revenue Authority	wra
+4e727c21-3539-47da-a285-246fca05d903	East Riding of Yorkshire Council	eryc
+e6df5f85-2d8f-df93-bad0-369dc10aaa9a	Rother District Council	rother
+6466d990-5449-c231-e467-b0f871cc0122	CADW	cadw
+a0574b24-5fe5-089c-40b5-ba3f2c3db727	Tyne and Wear Fire and Rescue Service	twfrs
+deef25a0-bd19-0d06-734a-2bdb8486f2e3	Thames Valley Police	thames-valley-police
+ea45c9f6-3a10-4e21-571a-c210ffedc705	Ofgem	ofgem
+7cdd1867-078a-dd0b-9e47-73668897acb6	Hackney Council	hackney
+96af3afb-1a3d-702a-8ef4-c5f8b7aedaea	Pension Wise	pension-wise
+4a8eea03-a517-8807-83be-9975db948915	NHS	nhs
+49218431-9745-fdd8-6e89-a41cc59178d3	Vale of Glamorgan	vale-of-glamorgan
+0639f127-8798-7186-5db7-1492f53f7dcb	Rother and Wealden	wdc
+e944aec8-d817-6af0-f96f-3accae67b916	Brighton and Hove city council	brighton-hove
+6533565c-fae3-f25b-997d-67b1720eddcc	ACAS	acas
+95f64a6f-ff86-3628-4b8c-e6ca89854766	Worcestershire County Council	worcestershire
+c0c81bbd-c8c0-c3c7-3220-8f6a3fea1f07	Buckinghamshire County Council	buckinghamshire
+0013ed9a-ecaa-da46-e032-f45d61fde2a6	Bournemouth Borough Council	bournemouth
+402611e4-93d0-0b7d-e737-22f8b3c1620e	Hampshire County Council	hants
+11915770-7389-43d6-04c6-1180fc6f640a	Neath Port Talbot Council	npt
+0085e7c1-8a17-22be-016f-bd9e5a570bf7	North Somerset Council	north-somerset
+b828eba4-8a3b-6a87-15f8-f50e55a9e0fb	Anglesey Council	anglesey
+19a4ea0c-d057-44c2-c266-6a2387d8f0c7	Angus Council	angus
+715d69cc-2a99-ba47-f350-3492077ff264	Cheshire East Council	cheshire-east
+7fd7e453-2c6a-33d9-37c2-a47a1b1df607	Newham Council	newham
+c5fa7c3c-1cb0-e8a3-a585-72c114a5a77e	Warwickshire Council	warwickshire
+93f1ae79-f780-d7b3-abf3-08b772e4a93e	Disclosure and Barring Service	dbs
+89580801-3f50-8675-bee4-fa109f8d4ef8	Natural Resources Wales	natural-resources-wales
+6fbe28a9-c5a3-e8d2-2f3f-24663f15db0b	North Yorkshire Council	north-yorkshire
+48d04394-2441-4593-3632-8adb017736c1	Redbridge Council	redbridge
+5badad4f-bf83-b836-429d-8bb2fc4b6cee	Wigan Council	wigan
+\.
+
+
+--
+-- Data for Name: letter_rates; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.letter_rates (id, start_date, end_date, sheet_count, rate, crown, post_class) FROM stdin;
+44ffeeee-45c9-4b5e-a68e-cec61924cac5	2016-03-31 23:00:00	2018-09-30 23:00:00	2	0.33	t	second
+c365a298-a5dd-4fc6-b1e0-2be5da37e50b	2016-03-31 23:00:00	2018-09-30 23:00:00	3	0.36	t	second
+e87fb305-504c-4e03-9c9d-f4822fbbc924	2016-03-31 23:00:00	2018-09-30 23:00:00	1	0.33	f	second
+354870d8-81b8-4875-a17b-1cdcbc4909f7	2016-03-31 23:00:00	2018-09-30 23:00:00	2	0.39	f	second
+dca56dc0-f8cf-41f1-a25f-96b90289b51f	2016-03-31 23:00:00	2018-09-30 23:00:00	3	0.45	f	second
+8fca7705-e26a-464b-b034-247effca4844	2018-06-30 23:00:00	2018-09-30 23:00:00	4	0.39	t	second
+7ff6f4de-e2d7-47eb-8984-eb98038131f9	2018-06-30 23:00:00	2018-09-30 23:00:00	4	0.51	f	second
+4830ab9b-63e1-425c-9a6d-1183131590f2	2018-06-30 23:00:00	2018-09-30 23:00:00	5	0.42	t	second
+ef4cb5c8-508b-45b4-aace-7db17c430b73	2018-06-30 23:00:00	2018-09-30 23:00:00	5	0.57	f	second
+da2b9f5b-0528-4d12-b919-123b5462db7e	2016-03-31 23:00:00	2019-09-30 23:00:00	1	0.30	t	second
+cce6eecc-81e6-4478-80b2-dd87d2b27caf	2018-09-30 23:00:00	2019-09-30 23:00:00	1	0.3	f	second
+7e916d12-f24f-417d-95fb-5e094645dbbb	2018-09-30 23:00:00	2019-09-30 23:00:00	2	0.35	t	second
+053bab5b-be63-424d-8b05-3af5c4bb48a1	2018-09-30 23:00:00	2019-09-30 23:00:00	2	0.35	f	second
+18906c9a-e137-497e-8649-70c5c007e480	2018-09-30 23:00:00	2019-09-30 23:00:00	3	0.4	t	second
+740f25d5-8b88-4342-bad7-1a0c014a9b03	2018-09-30 23:00:00	2019-09-30 23:00:00	3	0.4	f	second
+f8f1f20d-a8db-4ca6-9539-27898f631108	2018-09-30 23:00:00	2019-09-30 23:00:00	4	0.45	t	second
+1cc72816-fa8c-4289-a98c-3e2d68a8e808	2018-09-30 23:00:00	2019-09-30 23:00:00	4	0.45	f	second
+12b89efc-41fe-4135-a596-33f760ea82e6	2018-09-30 23:00:00	2019-09-30 23:00:00	5	0.5	t	second
+360a77a7-4e89-47f3-b2fb-578bfa91bfa2	2018-09-30 23:00:00	2019-09-30 23:00:00	5	0.5	f	second
+388214b7-f229-42d8-92fd-09832dfea811	2018-08-31 23:00:00	2019-09-30 23:00:00	1	0.56	t	first
+eda0f60c-083b-4890-8e08-e4b74cab76ce	2018-08-31 23:00:00	2019-09-30 23:00:00	1	0.56	f	first
+12c1d86f-dff7-49d6-8bad-60f98980029e	2018-08-31 23:00:00	2019-09-30 23:00:00	2	0.61	t	first
+5d58c8f0-f908-4684-a672-c717dc548fc7	2018-08-31 23:00:00	2019-09-30 23:00:00	2	0.61	f	first
+77839b46-7efb-407b-8dff-9891faac8846	2018-08-31 23:00:00	2019-09-30 23:00:00	3	0.66	t	first
+9bd46800-829f-4fb9-9b79-3c666a2726fb	2018-08-31 23:00:00	2019-09-30 23:00:00	3	0.66	f	first
+947af7b4-e16a-48eb-bde0-fdefbbfd052b	2018-08-31 23:00:00	2019-09-30 23:00:00	4	0.71	t	first
+51deb4cf-9cd3-43a5-a85e-0a44c2d6f102	2018-08-31 23:00:00	2019-09-30 23:00:00	4	0.71	f	first
+932a4af4-7738-474c-a294-b8b16e3cfffe	2018-08-31 23:00:00	2019-09-30 23:00:00	5	0.76	t	first
+df478166-5ea2-4f4e-95a2-0c80d60c0a31	2018-08-31 23:00:00	2019-09-30 23:00:00	5	0.76	f	first
+f47b1446-d4d8-4041-99ae-707c3531e4a3	2019-09-30 23:00:00	2021-02-01 00:00:00	1	0.61	t	first
+77549648-d74e-43bf-875f-4262593eb310	2019-09-30 23:00:00	2021-02-01 00:00:00	1	0.35	t	second
+60356b2b-2bca-41b6-82e5-b7a192566706	2019-09-30 23:00:00	2021-02-01 00:00:00	1	0.61	f	first
+21819ff8-66f5-40e1-9dfe-985dd6e91b6a	2019-09-30 23:00:00	2021-02-01 00:00:00	1	0.35	f	second
+3f134810-7257-426f-91a6-e701bcbfb77f	2019-09-30 23:00:00	2021-02-01 00:00:00	2	0.66	t	first
+7dd1031c-593b-4d28-bff9-657311744293	2019-09-30 23:00:00	2021-02-01 00:00:00	2	0.4	t	second
+7355b86c-3742-4cc5-b91e-2293c48cac70	2019-09-30 23:00:00	2021-02-01 00:00:00	2	0.66	f	first
+e26b023c-2540-4bb2-af6e-653b88731f2b	2019-09-30 23:00:00	2021-02-01 00:00:00	2	0.4	f	second
+02d449a3-4161-4b2a-8c8b-4853dc59786d	2019-09-30 23:00:00	2021-02-01 00:00:00	3	0.71	t	first
+2556b90e-1637-4a67-86bb-4328c6bdc879	2019-09-30 23:00:00	2021-02-01 00:00:00	3	0.45	t	second
+cbc43e68-57cc-4c57-b752-96f2e8250f2c	2019-09-30 23:00:00	2021-02-01 00:00:00	3	0.71	f	first
+6f1485a4-cc83-481e-afee-86d797a54731	2019-09-30 23:00:00	2021-02-01 00:00:00	3	0.45	f	second
+b025962c-13f4-4690-8a66-bac7c5f335d1	2019-09-30 23:00:00	2021-02-01 00:00:00	4	0.76	t	first
+c968acfd-425f-49b8-9b7d-9f440565bd3b	2019-09-30 23:00:00	2021-02-01 00:00:00	4	0.5	t	second
+185e3df8-2c88-429b-ba3f-1e701235bc9e	2019-09-30 23:00:00	2021-02-01 00:00:00	4	0.76	f	first
+5995905d-864b-4de2-ab78-8c3f49ed2f85	2019-09-30 23:00:00	2021-02-01 00:00:00	4	0.5	f	second
+38c049bf-37c4-4b3d-bab0-7854e0868667	2019-09-30 23:00:00	2021-02-01 00:00:00	5	0.81	t	first
+7360d7e8-06cd-419c-895e-3d6fb5ea02ff	2019-09-30 23:00:00	2021-02-01 00:00:00	5	0.55	t	second
+82e7c349-32fb-4e51-bbb7-71edc2897a37	2019-09-30 23:00:00	2021-02-01 00:00:00	5	0.81	f	first
+321bc48d-76c9-4521-a630-e9fc52f12294	2019-09-30 23:00:00	2021-02-01 00:00:00	5	0.55	f	second
+d6020fe2-0fce-451c-98f9-32315fcb15fb	2020-06-30 23:00:00	2021-02-01 00:00:00	1	0.84	t	europe
+5976dcfb-189e-4d2c-b250-f17ac1f0e017	2020-06-30 23:00:00	2021-02-01 00:00:00	1	0.84	t	rest-of-world
+cab94e21-6978-4d8d-93bd-29f703a26925	2020-06-30 23:00:00	2021-02-01 00:00:00	1	0.84	f	europe
+98322c23-e74e-4baa-868d-ac0e74e882e7	2020-06-30 23:00:00	2021-02-01 00:00:00	1	0.84	f	rest-of-world
+7d20ffd5-aecb-4316-bc84-f996895337f9	2020-06-30 23:00:00	2021-02-01 00:00:00	2	0.92	t	europe
+7b9590f9-20ea-43e8-b6f7-5f2f61a6d9ce	2020-06-30 23:00:00	2021-02-01 00:00:00	2	0.92	t	rest-of-world
+79c26e75-c3f0-471c-8adb-d270a95a22a4	2020-06-30 23:00:00	2021-02-01 00:00:00	2	0.92	f	europe
+3437b002-b263-40ec-bdad-80a6228ed0ba	2020-06-30 23:00:00	2021-02-01 00:00:00	2	0.92	f	rest-of-world
+33c886dd-dcc8-4ff8-9b4a-40850f9a0fe3	2020-06-30 23:00:00	2021-02-01 00:00:00	3	1.0	t	europe
+a7c2c010-c3f3-483c-b3ab-27f052a4cec3	2020-06-30 23:00:00	2021-02-01 00:00:00	3	1.0	t	rest-of-world
+9943f997-e8ab-4979-8283-8d49718c4a24	2020-06-30 23:00:00	2021-02-01 00:00:00	3	1.0	f	europe
+ddff76c1-0a6e-4488-9334-c42977a33a44	2020-06-30 23:00:00	2021-02-01 00:00:00	3	1.0	f	rest-of-world
+21e351d1-2530-455b-9f10-cc5bad690905	2020-06-30 23:00:00	2021-02-01 00:00:00	4	1.08	t	europe
+f25a9f50-d074-46ff-856b-fe3a1180ec35	2020-06-30 23:00:00	2021-02-01 00:00:00	4	1.08	t	rest-of-world
+62603e04-31f5-4648-8231-76dd71d1506c	2020-06-30 23:00:00	2021-02-01 00:00:00	4	1.08	f	europe
+9e2b1b21-e1ea-4a3f-ad04-9051ac2aaf11	2020-06-30 23:00:00	2021-02-01 00:00:00	4	1.08	f	rest-of-world
+a061e481-b268-4844-8b90-918d7774471f	2020-06-30 23:00:00	2021-02-01 00:00:00	5	1.16	t	europe
+aecc219c-96de-40d8-8e75-1c8d7d5a6afc	2020-06-30 23:00:00	2021-02-01 00:00:00	5	1.16	t	rest-of-world
+c9cec111-4f38-4eb4-8257-60c9aad5d24e	2020-06-30 23:00:00	2021-02-01 00:00:00	5	1.16	f	europe
+ea6889dd-d645-41e8-b50f-52f9e6cb2e86	2020-06-30 23:00:00	2021-02-01 00:00:00	5	1.16	f	rest-of-world
+6b6d1484-5e77-4c34-bbdd-4032b5156c94	2021-02-01 00:00:00	2022-03-01 00:00:00	1	0.69	t	first
+318e2146-4a61-471c-a329-0a3c8d87f8a5	2021-02-01 00:00:00	2022-03-01 00:00:00	1	0.39	t	second
+41e7e9d5-28a8-41f5-b377-3d53f850370e	2021-02-01 00:00:00	2022-03-01 00:00:00	1	0.89	t	europe
+06e4b49e-0924-4a04-9b85-e345779805f5	2021-02-01 00:00:00	2022-03-01 00:00:00	1	0.89	t	rest-of-world
+97b6b05c-a010-4c66-a548-70b6382083bd	2021-02-01 00:00:00	2022-03-01 00:00:00	1	0.69	f	first
+d8fe262b-984e-442a-a4b0-4ffd9f666449	2021-02-01 00:00:00	2022-03-01 00:00:00	1	0.39	f	second
+d1d97460-af8e-43c3-9e59-2427da3f9f34	2021-02-01 00:00:00	2022-03-01 00:00:00	1	0.89	f	europe
+9668f778-dac3-4141-8f66-664c9dd7bdb1	2021-02-01 00:00:00	2022-03-01 00:00:00	1	0.89	f	rest-of-world
+e77ffd4d-2aea-406c-9af2-85bd090a1619	2021-02-01 00:00:00	2022-03-01 00:00:00	2	0.74	t	first
+b22c0fe2-2af2-49f8-8852-ea9e47fc680e	2021-02-01 00:00:00	2022-03-01 00:00:00	2	0.44	t	second
+d6f71fe8-6a3e-421b-8d7d-cb1082f31ed9	2021-02-01 00:00:00	2022-03-01 00:00:00	2	0.97	t	europe
+48477ddb-f3d7-4b2f-9233-2ecae722c3e8	2021-02-01 00:00:00	2022-03-01 00:00:00	2	0.97	t	rest-of-world
+e4c6a344-8eb0-440e-81f8-de9775f54a67	2021-02-01 00:00:00	2022-03-01 00:00:00	2	0.74	f	first
+40d80ee0-e2f5-43f3-a263-cfbde2ac4fc6	2021-02-01 00:00:00	2022-03-01 00:00:00	2	0.44	f	second
+a07620dd-cf98-42b2-9cc6-6e107b16a8c4	2021-02-01 00:00:00	2022-03-01 00:00:00	2	0.97	f	europe
+d4f5795a-2695-49dd-82b4-93783e0f4fb1	2021-02-01 00:00:00	2022-03-01 00:00:00	2	0.97	f	rest-of-world
+4fafd77d-710e-490c-bd9f-370bfb263169	2021-02-01 00:00:00	2022-03-01 00:00:00	3	0.79	t	first
+12970a86-ccb5-4b8b-857b-236b0bf844bf	2021-02-01 00:00:00	2022-03-01 00:00:00	3	0.49	t	second
+166fcb5b-8fd3-4dcd-9be0-ca4a7a7d8a08	2021-02-01 00:00:00	2022-03-01 00:00:00	3	1.05	t	europe
+00e1256d-2742-4c1c-8e8f-9680d66fa84f	2021-02-01 00:00:00	2022-03-01 00:00:00	3	1.05	t	rest-of-world
+0014e5f7-26df-43d4-8a8a-9e4c66309c52	2021-02-01 00:00:00	2022-03-01 00:00:00	3	0.79	f	first
+5b8e60b7-f59f-4688-8cc2-2708901c243b	2021-02-01 00:00:00	2022-03-01 00:00:00	3	0.49	f	second
+1581bfca-6426-4d54-b1ee-84269cdc15b7	2021-02-01 00:00:00	2022-03-01 00:00:00	3	1.05	f	europe
+2ff2de55-2022-456d-b51d-7fd6c5cab0db	2021-02-01 00:00:00	2022-03-01 00:00:00	3	1.05	f	rest-of-world
+4e9bfc90-6573-46b0-8860-d3adbcb6a0f0	2021-02-01 00:00:00	2022-03-01 00:00:00	4	0.84	t	first
+4755d994-3f97-4635-a76f-c955818998ee	2021-02-01 00:00:00	2022-03-01 00:00:00	4	0.54	t	second
+85e45c73-8d49-4498-9e7a-48457ada2e73	2021-02-01 00:00:00	2022-03-01 00:00:00	4	1.13	t	europe
+bae682e8-a927-4264-901f-a4a7de9cea42	2021-02-01 00:00:00	2022-03-01 00:00:00	4	1.13	t	rest-of-world
+00ecd18e-41fa-47ae-b1f1-17852d2d52e1	2021-02-01 00:00:00	2022-03-01 00:00:00	4	0.84	f	first
+e55fa71e-8520-4e6e-8497-dc484d72859e	2021-02-01 00:00:00	2022-03-01 00:00:00	4	0.54	f	second
+566de060-602f-4dd0-a769-9f047632c8c8	2021-02-01 00:00:00	2022-03-01 00:00:00	4	1.13	f	europe
+aaff10ef-632b-462d-aa3f-76deb0b181e7	2021-02-01 00:00:00	2022-03-01 00:00:00	4	1.13	f	rest-of-world
+55c9e73f-61c4-4cef-a424-24a4b29c406c	2021-02-01 00:00:00	2022-03-01 00:00:00	5	0.89	t	first
+d09d0f63-83db-4184-98e6-f59b13b9a229	2021-02-01 00:00:00	2022-03-01 00:00:00	5	0.59	t	second
+5d99b7bd-46a8-43d8-97d4-ac930c21ef93	2021-02-01 00:00:00	2022-03-01 00:00:00	5	1.21	t	europe
+05bdf2f4-c567-49f3-bf08-41eccddc315e	2021-02-01 00:00:00	2022-03-01 00:00:00	5	1.21	t	rest-of-world
+7b513e8c-3a41-474f-b16e-d42743946ec5	2021-02-01 00:00:00	2022-03-01 00:00:00	5	0.89	f	first
+feab17f0-d0cc-4f61-9891-b8821ca39092	2021-02-01 00:00:00	2022-03-01 00:00:00	5	0.59	f	second
+859978e6-5bb6-4254-97f6-a71f3a1159b3	2021-02-01 00:00:00	2022-03-01 00:00:00	5	1.21	f	europe
+641c1ea4-729e-4797-b6f7-bc7af322cf07	2021-02-01 00:00:00	2022-03-01 00:00:00	5	1.21	f	rest-of-world
+77e81013-cc60-47a2-a5d5-3926f53175ed	2022-03-01 00:00:00	\N	1	0.63	t	first
+ed982b9e-b87e-436c-9593-68921cdd2f34	2022-03-01 00:00:00	\N	1	0.41	t	second
+12a08e52-7065-4b37-b5b5-5b7019e90d03	2022-03-01 00:00:00	\N	1	0.96	t	europe
+79079f68-403f-4c48-9d21-e55c74dfea0c	2022-03-01 00:00:00	\N	1	0.96	t	rest-of-world
+9523011c-d487-4c31-8cda-c62c12bbd704	2022-03-01 00:00:00	\N	1	0.63	f	first
+e5972011-77de-43de-99bc-3596b3f20ff7	2022-03-01 00:00:00	\N	1	0.41	f	second
+e808a6d2-047c-4d08-b4ad-b88d8b4ec3da	2022-03-01 00:00:00	\N	1	0.96	f	europe
+1aff69c4-7b7c-4a06-92f8-2cf54cacb1a7	2022-03-01 00:00:00	\N	1	0.96	f	rest-of-world
+02f0a4d2-c8cf-4f9a-841f-3f090a045737	2022-03-01 00:00:00	\N	2	0.68	t	first
+c037b533-1fd6-45ef-90cd-832dc5540b35	2022-03-01 00:00:00	\N	2	0.46	t	second
+ecdb503c-fc4f-439c-b9e7-cdaae8ef46d8	2022-03-01 00:00:00	\N	2	1.04	t	europe
+42624e3e-4f28-47ca-8bdf-ee5f6345a3f4	2022-03-01 00:00:00	\N	2	1.04	t	rest-of-world
+a20c3b48-31a9-46b8-ad56-781eb3b87ead	2022-03-01 00:00:00	\N	2	0.68	f	first
+95eed7d1-98df-489b-a215-33438ce30738	2022-03-01 00:00:00	\N	2	0.46	f	second
+f87492ba-5fc3-44db-a181-44b629c9992a	2022-03-01 00:00:00	\N	2	1.04	f	europe
+3ac7728a-1fbc-448c-a03a-45ed4d842ce6	2022-03-01 00:00:00	\N	2	1.04	f	rest-of-world
+ffe994a1-a8d1-4bc7-b520-2706a24303ca	2022-03-01 00:00:00	\N	3	0.73	t	first
+be0f7d00-c199-4c1e-a00f-0c9147b4e59e	2022-03-01 00:00:00	\N	3	0.51	t	second
+9a4d8635-9c04-4ec6-926b-6c0cdc583660	2022-03-01 00:00:00	\N	3	1.12	t	europe
+5c363cf3-fc07-4e87-abb2-ce9f1b7a20e1	2022-03-01 00:00:00	\N	3	1.12	t	rest-of-world
+4ebcc421-2936-4a6f-a065-ddf4dc357300	2022-03-01 00:00:00	\N	3	0.73	f	first
+76ff17e8-8167-4e72-9439-45485f9e6ca9	2022-03-01 00:00:00	\N	3	0.51	f	second
+68bfbf9c-09fb-4d2f-89b1-301828da9097	2022-03-01 00:00:00	\N	3	1.12	f	europe
+c17d5081-d12c-4da7-b38f-99174a6eb23d	2022-03-01 00:00:00	\N	3	1.12	f	rest-of-world
+974698e1-a0c3-47f1-9bac-001bd76e39a4	2022-03-01 00:00:00	\N	4	0.78	t	first
+3e02a491-4284-43f1-9d65-6c69204cdf11	2022-03-01 00:00:00	\N	4	0.56	t	second
+b4c6012d-533d-4f2b-8715-eaf0422d1098	2022-03-01 00:00:00	\N	4	1.2	t	europe
+2ea97f62-eead-4cef-a3f0-80e7977b88e9	2022-03-01 00:00:00	\N	4	1.2	t	rest-of-world
+77728dfe-3566-4f42-b12b-c0211c0e0cdd	2022-03-01 00:00:00	\N	4	0.78	f	first
+fc268c2b-a8fb-4282-adf1-015f19ca9344	2022-03-01 00:00:00	\N	4	0.56	f	second
+f821feb0-9a9a-405c-b6ba-753bf4ec4119	2022-03-01 00:00:00	\N	4	1.2	f	europe
+65574295-2e84-42f5-a1d3-bd175d4fcdfb	2022-03-01 00:00:00	\N	4	1.2	f	rest-of-world
+d919e822-7ba4-4d73-b295-e8e41424fda8	2022-03-01 00:00:00	\N	5	0.83	t	first
+d1fb16f7-1a49-4e24-998b-8784f54483dc	2022-03-01 00:00:00	\N	5	0.61	t	second
+9e90ad51-7721-4f2d-b033-d507ebeaf092	2022-03-01 00:00:00	\N	5	1.28	t	europe
+e201b49f-504f-444f-a841-a20545809551	2022-03-01 00:00:00	\N	5	1.28	t	rest-of-world
+d06b33bc-1dae-4feb-9ed6-3854b00e0aca	2022-03-01 00:00:00	\N	5	0.83	f	first
+706f74d6-c41e-436d-8db0-67aaebc190f6	2022-03-01 00:00:00	\N	5	0.61	f	second
+cff30689-db96-4eca-95e7-1e005ec336f9	2022-03-01 00:00:00	\N	5	1.28	f	europe
+53665c20-ffe1-4e8a-8111-8130f0718b95	2022-03-01 00:00:00	\N	5	1.28	f	rest-of-world
+\.
+
+
+--
+-- Data for Name: notification_history; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.notification_history (id, job_id, job_row_number, service_id, template_id, template_version, api_key_id, key_type, notification_type, created_at, sent_at, sent_by, updated_at, reference, billable_units, client_reference, international, phone_prefix, rate_multiplier, notification_status, created_by_id, postage, document_download_count) FROM stdin;
+\.
+
+
+--
+-- Data for Name: notification_status_types; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.notification_status_types (name) FROM stdin;
+permanent-failure
+failed
+created
+technical-failure
+delivered
+sending
+sent
+temporary-failure
+pending
+pending-virus-check
+virus-scan-failed
+cancelled
+returned-letter
+validation-failed
+\.
+
+
+--
+-- Data for Name: notifications; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.notifications (id, "to", job_id, service_id, template_id, created_at, sent_at, sent_by, updated_at, reference, template_version, job_row_number, _personalisation, api_key_id, key_type, notification_type, billable_units, client_reference, international, phone_prefix, rate_multiplier, notification_status, normalised_to, created_by_id, reply_to_text, postage, document_download_count) FROM stdin;
+1083e691-778b-4cde-a5f8-c9f395931fee	07700900000	\N	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	36fb0730-6259-4da1-8a80-c8de22ad4246	2022-10-17 15:48:08.336467	\N	\N	\N	\N	1	\N	eyJ2ZXJpZnlfY29kZSI6IjA4MzYyIn0.nYPdQ-giH-4ODtUvi5In8V6envw	\N	normal	sms	0	\N	f	44	1	created	447700900000	\N	GOVUK	\N	\N
+\.
+
+
+--
+-- Data for Name: organisation; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.organisation (id, name, active, created_at, updated_at, email_branding_id, letter_branding_id, agreement_signed, agreement_signed_at, agreement_signed_by_id, agreement_signed_version, crown, organisation_type, request_to_go_live_notes, agreement_signed_on_behalf_of_email_address, agreement_signed_on_behalf_of_name, billing_contact_email_addresses, billing_contact_names, billing_reference, notes, purchase_order_number) FROM stdin;
+38e4bf69-93b0-445d-acee-53ea53fe02df	Broadcast Services (development)	t	2022-10-17 12:41:29.841793	\N	\N	\N	\N	\N	\N	\N	\N	central	\N	\N	\N	\N	\N	\N	\N	\N
+f4e9e888-bbf6-425b-aa96-76f939888bee	Fujitsu	t	2022-10-17 12:56:33.530804	\N	\N	\N	f	\N	\N	\N	f	other	\N	\N	\N	\N	\N	\N	\N	\N
+\.
+
+
+--
+-- Data for Name: organisation_types; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.organisation_types (name, is_crown, annual_free_sms_fragment_limit) FROM stdin;
+central	\N	250000
+local	f	25000
+nhs	\N	25000
+nhs_central	t	250000
+nhs_local	f	25000
+emergency_service	f	25000
+school_or_college	f	25000
+other	\N	25000
+nhs_gp	f	25000
+\.
+
+
+--
+-- Data for Name: permissions; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.permissions (id, service_id, user_id, permission, created_at) FROM stdin;
+5b98397a-ae11-4e4d-bfd5-e0146c453810	9f8e8a80-488c-42d9-90c3-767eaea1e050	eeb7c729-31f1-4c15-97e0-4678f936fd4f	view_activity	2022-10-17 12:57:11.088695
+73fd1368-7e35-48b4-be8a-7a92a125a1cb	9f8e8a80-488c-42d9-90c3-767eaea1e050	4cad9e65-5cbb-47ac-aafc-a6b662142e82	create_broadcasts	2022-10-17 15:48:44.063899
+b7754183-9733-428d-8917-e66433c24435	9f8e8a80-488c-42d9-90c3-767eaea1e050	4cad9e65-5cbb-47ac-aafc-a6b662142e82	reject_broadcasts	2022-10-17 15:48:44.063914
+572df5f1-1fb0-4703-9f04-4637b2baee47	9f8e8a80-488c-42d9-90c3-767eaea1e050	4cad9e65-5cbb-47ac-aafc-a6b662142e82	view_activity	2022-10-17 15:48:44.063922
+ab9dfbf7-818f-485c-801e-51ee907ef097	9f8e8a80-488c-42d9-90c3-767eaea1e050	4cad9e65-5cbb-47ac-aafc-a6b662142e82	manage_templates	2022-10-17 15:48:44.063931
+26ab25c5-5e29-4ee7-92ad-1661f9134311	9f8e8a80-488c-42d9-90c3-767eaea1e050	4cad9e65-5cbb-47ac-aafc-a6b662142e82	approve_broadcasts	2022-10-17 15:48:44.063939
+2ed70232-402b-4cd9-aa2a-3a9f7be84610	9f8e8a80-488c-42d9-90c3-767eaea1e050	4cad9e65-5cbb-47ac-aafc-a6b662142e82	cancel_broadcasts	2022-10-17 15:48:44.063946
+\.
+
+
+--
+-- Data for Name: provider_details; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.provider_details (id, display_name, identifier, priority, notification_type, active, updated_at, version, created_by_id, supports_international) FROM stdin;
+5484f53f-2c2a-45bf-bf2a-f8cf932c6269	AWS SES	ses	10	email	t	\N	1	\N	f
+c6be6a3d-2baf-48e7-8c57-b61726b46622	DVLA	dvla	50	letter	t	\N	1	\N	f
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	10	sms	t	2022-10-17 15:25:53.508655	33	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	20	sms	t	2022-10-17 15:25:53.509292	33	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+\.
+
+
+--
+-- Data for Name: provider_details_history; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.provider_details_history (id, display_name, identifier, priority, notification_type, active, version, updated_at, created_by_id, supports_international) FROM stdin;
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	20	sms	t	1	\N	\N	f
+5484f53f-2c2a-45bf-bf2a-f8cf932c6269	AWS SES	ses	10	email	t	1	\N	\N	f
+c6be6a3d-2baf-48e7-8c57-b61726b46622	DVLA	dvla	50	letter	t	1	\N	\N	f
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	10	sms	t	1	\N	\N	t
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	0	sms	t	2	2022-10-17 12:45:42.051799	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	30	sms	t	2	2022-10-17 12:45:42.052112	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	20	sms	t	3	2022-10-17 12:50:43.859658	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	10	sms	t	3	2022-10-17 12:50:43.859957	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	10	sms	t	4	2022-10-17 12:55:44.204431	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	20	sms	t	4	2022-10-17 12:55:44.204744	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	0	sms	t	5	2022-10-17 12:58:13.882898	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	30	sms	t	5	2022-10-17 12:58:13.883568	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	20	sms	t	6	2022-10-17 13:00:58.356843	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	10	sms	t	6	2022-10-17 13:00:58.357102	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	0	sms	t	7	2022-10-17 13:03:20.105972	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	30	sms	t	7	2022-10-17 13:03:20.106274	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	20	sms	t	8	2022-10-17 13:05:58.618604	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	10	sms	t	8	2022-10-17 13:05:58.618907	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	10	sms	t	9	2022-10-17 13:08:20.444372	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	20	sms	t	9	2022-10-17 13:08:20.444642	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	10	sms	t	10	2022-10-17 13:10:58.912375	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	20	sms	t	10	2022-10-17 13:10:58.912693	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	10	sms	t	11	2022-10-17 13:13:20.959776	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	20	sms	t	11	2022-10-17 13:13:20.960237	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	0	sms	t	12	2022-10-17 13:15:59.989214	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	30	sms	t	12	2022-10-17 13:15:59.989666	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	20	sms	t	13	2022-10-17 13:18:21.877122	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	10	sms	t	13	2022-10-17 13:18:21.878109	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	10	sms	t	14	2022-10-17 13:21:00.305688	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	20	sms	t	14	2022-10-17 13:21:00.306141	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	10	sms	t	15	2022-10-17 13:23:22.322126	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	20	sms	t	15	2022-10-17 13:23:22.322437	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	10	sms	t	16	2022-10-17 13:26:00.948454	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	20	sms	t	16	2022-10-17 13:26:00.948851	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	10	sms	t	17	2022-10-17 13:28:22.722179	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	20	sms	t	17	2022-10-17 13:28:22.722543	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	10	sms	t	18	2022-10-17 13:31:01.654878	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	20	sms	t	18	2022-10-17 13:31:01.65608	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	10	sms	t	19	2022-10-17 13:33:22.945239	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	20	sms	t	19	2022-10-17 13:33:22.945856	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	10	sms	t	20	2022-10-17 13:36:01.967532	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	20	sms	t	20	2022-10-17 13:36:01.968016	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	10	sms	t	21	2022-10-17 13:38:23.789655	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	20	sms	t	21	2022-10-17 13:38:23.79005	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	10	sms	t	22	2022-10-17 13:41:02.479088	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	20	sms	t	22	2022-10-17 13:41:02.479601	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	0	sms	t	23	2022-10-17 13:43:24.901462	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	30	sms	t	23	2022-10-17 13:43:24.90188	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	20	sms	t	24	2022-10-17 13:46:03.066364	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	10	sms	t	24	2022-10-17 13:46:03.066618	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	10	sms	t	25	2022-10-17 13:48:25.327013	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	20	sms	t	25	2022-10-17 13:48:25.327637	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	10	sms	t	26	2022-10-17 13:51:03.875684	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	20	sms	t	26	2022-10-17 13:51:03.876694	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	10	sms	t	27	2022-10-17 13:53:25.634119	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	20	sms	t	27	2022-10-17 13:53:25.634531	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	10	sms	t	28	2022-10-17 13:56:04.156737	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	20	sms	t	28	2022-10-17 13:56:04.157057	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	10	sms	t	29	2022-10-17 13:58:26.007706	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	20	sms	t	29	2022-10-17 13:58:26.008054	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	10	sms	t	30	2022-10-17 14:01:04.393318	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	20	sms	t	30	2022-10-17 14:01:04.393701	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	10	sms	t	31	2022-10-17 14:03:26.460113	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	20	sms	t	31	2022-10-17 14:03:26.460579	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	10	sms	t	32	2022-10-17 15:20:53.288803	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	20	sms	t	32	2022-10-17 15:20:53.289769	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7a895ddd-9057-419d-83a3-d90ff7999e91	MMG	mmg	10	sms	t	33	2022-10-17 15:25:53.508655	6af522d0-2915-4e52-83a3-3690455a5fe6	t
+7aff8bfc-cde0-480c-adcf-0c7c365c6393	Firetext	firetext	20	sms	t	33	2022-10-17 15:25:53.509292	6af522d0-2915-4e52-83a3-3690455a5fe6	f
+\.
+
+
+--
+-- Data for Name: rates; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.rates (id, valid_from, rate, notification_type) FROM stdin;
+ce755ef6-072b-4433-9ade-8d240a9bd315	2016-05-18 00:00:00	0.0165	sms
+3bda06ca-2e73-4951-b321-a4cf5eb3c2d8	2017-03-31 23:00:00	0.0158	sms
+0e90b15c-637b-4e83-8d96-ff32410f49ae	2021-03-31 23:00:00	0.0160	sms
+701dc8d6-3fb9-4df7-a68b-12dc898a7d82	2022-04-30 23:00:00	0.0172	sms
+5c6d19dd-8ab8-4e08-9741-4f28412ee39f	2022-03-31 23:00:00	0.0161	sms
+\.
+
+
+--
+-- Data for Name: returned_letters; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.returned_letters (id, reported_at, service_id, notification_id, created_at, updated_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: service_broadcast_provider_restriction; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.service_broadcast_provider_restriction (service_id, provider, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: service_broadcast_settings; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.service_broadcast_settings (service_id, channel, created_at, updated_at, provider) FROM stdin;
+9f8e8a80-488c-42d9-90c3-767eaea1e050	test	2022-10-17 12:58:46.232683	\N	all
+\.
+
+
+--
+-- Data for Name: service_callback_api; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.service_callback_api (id, service_id, url, bearer_token, created_at, updated_at, updated_by_id, version, callback_type) FROM stdin;
+\.
+
+
+--
+-- Data for Name: service_callback_api_history; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.service_callback_api_history (id, service_id, url, bearer_token, created_at, updated_at, updated_by_id, version, callback_type) FROM stdin;
+\.
+
+
+--
+-- Data for Name: service_callback_type; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.service_callback_type (name) FROM stdin;
+delivery_status
+complaint
+\.
+
+
+--
+-- Data for Name: service_contact_list; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.service_contact_list (id, original_file_name, row_count, template_type, service_id, created_by_id, created_at, updated_at, archived) FROM stdin;
+\.
+
+
+--
+-- Data for Name: service_data_retention; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.service_data_retention (id, service_id, notification_type, days_of_retention, created_at, updated_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: service_email_branding; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.service_email_branding (service_id, email_branding_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: service_email_reply_to; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.service_email_reply_to (id, service_id, email_address, is_default, created_at, updated_at, archived) FROM stdin;
+b3a58d57-2337-662a-4cba-40792a9322f2	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	notify+1@digital.cabinet-office.gov.uk	f	2022-10-17 12:41:29.841793	\N	f
+\.
+
+
+--
+-- Data for Name: service_inbound_api; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.service_inbound_api (id, service_id, url, bearer_token, created_at, updated_at, updated_by_id, version) FROM stdin;
+\.
+
+
+--
+-- Data for Name: service_inbound_api_history; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.service_inbound_api_history (id, service_id, url, bearer_token, created_at, updated_at, updated_by_id, version) FROM stdin;
+\.
+
+
+--
+-- Data for Name: service_letter_branding; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.service_letter_branding (service_id, letter_branding_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: service_letter_contacts; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.service_letter_contacts (id, service_id, contact_block, is_default, created_at, updated_at, archived) FROM stdin;
+\.
+
+
+--
+-- Data for Name: service_permission_types; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.service_permission_types (name) FROM stdin;
+sms
+international_sms
+letter
+email
+inbound_sms
+schedule_notifications
+email_auth
+letters_as_pdf
+upload_document
+edit_folder_permissions
+upload_letters
+international_letters
+broadcast
+document_download_verify_email
+\.
+
+
+--
+-- Data for Name: service_permissions; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.service_permissions (service_id, permission, created_at) FROM stdin;
+d6aa2c68-a2d9-4437-ab19-3ae8eb202553	sms	2017-05-26 17:30:00
+d6aa2c68-a2d9-4437-ab19-3ae8eb202553	email	2017-05-26 17:30:00
+d6aa2c68-a2d9-4437-ab19-3ae8eb202553	international_sms	2022-10-17 12:41:30.948391
+d6aa2c68-a2d9-4437-ab19-3ae8eb202553	upload_letters	2022-10-17 12:41:29.841793
+d6aa2c68-a2d9-4437-ab19-3ae8eb202553	international_letters	2022-10-17 12:41:29.841793
+9f8e8a80-488c-42d9-90c3-767eaea1e050	broadcast	2022-10-17 12:58:46.235973
+\.
+
+
+--
+-- Data for Name: service_sms_senders; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.service_sms_senders (id, sms_sender, service_id, is_default, inbound_number_id, created_at, updated_at, archived) FROM stdin;
+286d6176-adbe-7ea7-ba26-b7606ee5e2a4	GOVUK	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	t	\N	2022-10-17 12:41:29.841793	\N	f
+d24b830b-57b4-4f14-bd80-02f46f8d54de	07984404008	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	f	\N	2022-10-17 12:41:29.841793	\N	f
+0edad991-07bb-489f-9681-6a6ebf884d10	development	9f8e8a80-488c-42d9-90c3-767eaea1e050	t	\N	2022-10-17 12:57:11.09383	\N	f
+\.
+
+
+--
+-- Data for Name: service_whitelist; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.service_whitelist (id, service_id, recipient_type, recipient, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: services; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.services (id, name, created_at, updated_at, active, message_limit, restricted, email_from, created_by_id, version, research_mode, organisation_type, prefix_sms, crown, rate_limit, contact_link, consent_to_research, volume_email, volume_letter, volume_sms, count_as_live, go_live_at, go_live_user_id, organisation_id, notes, billing_contact_email_addresses, billing_contact_names, billing_reference, purchase_order_number) FROM stdin;
+9f8e8a80-488c-42d9-90c3-767eaea1e050	Emergency Alerts	2022-10-17 12:57:11.075915	2022-10-17 12:58:46.299598	t	50	t	emergency.alerts	eeb7c729-31f1-4c15-97e0-4678f936fd4f	2	f	central	t	\N	3000	\N	\N	\N	\N	\N	f	\N	\N	38e4bf69-93b0-445d-acee-53ea53fe02df	\N	\N	\N	\N	\N
+d6aa2c68-a2d9-4437-ab19-3ae8eb202553	GOV.UK Notify	2022-10-17 12:41:30.425347	\N	t	1000	f	notify.user	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	\N	f	t	3000	\N	\N	\N	\N	\N	t	\N	\N	\N	\N	\N	\N	\N	\N
+\.
+
+
+--
+-- Data for Name: services_history; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.services_history (id, name, created_at, updated_at, active, message_limit, restricted, email_from, created_by_id, version, research_mode, organisation_type, prefix_sms, crown, rate_limit, contact_link, consent_to_research, volume_email, volume_letter, volume_sms, count_as_live, go_live_at, go_live_user_id, organisation_id, notes, billing_contact_email_addresses, billing_contact_names, billing_reference, purchase_order_number) FROM stdin;
+d6aa2c68-a2d9-4437-ab19-3ae8eb202553	GOV.UK Notify	2022-10-17 12:41:30.424755	\N	t	1000	f	gov.uk.notify	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	\N	\N	t	3000	\N	\N	\N	\N	\N	t	\N	\N	\N	\N	\N	\N	\N	\N
+9f8e8a80-488c-42d9-90c3-767eaea1e050	Emergency Alerts	2022-10-17 12:57:11.075915	\N	t	50	t	emergency.alerts	eeb7c729-31f1-4c15-97e0-4678f936fd4f	1	f	central	t	\N	3000	\N	\N	\N	\N	\N	f	\N	\N	\N	\N	\N	\N	\N	\N
+9f8e8a80-488c-42d9-90c3-767eaea1e050	Emergency Alerts	2022-10-17 12:57:11.075915	2022-10-17 12:58:46.299598	t	50	t	emergency.alerts	eeb7c729-31f1-4c15-97e0-4678f936fd4f	2	f	central	t	\N	3000	\N	\N	\N	\N	\N	f	\N	\N	38e4bf69-93b0-445d-acee-53ea53fe02df	\N	\N	\N	\N	\N
+\.
+
+
+--
+-- Data for Name: template_folder; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.template_folder (id, service_id, name, parent_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: template_folder_map; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.template_folder_map (template_id, template_folder_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: template_process_type; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.template_process_type (name) FROM stdin;
+normal
+priority
+\.
+
+
+--
+-- Data for Name: template_redacted; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.template_redacted (template_id, redact_personalisation, updated_at, updated_by_id) FROM stdin;
+ece42649-22a8-4d06-b87f-d52d5d3f0a27	f	2022-10-17 12:41:29.841793	6af522d0-2915-4e52-83a3-3690455a5fe6
+4f46df42-f795-4cc4-83bb-65ca312f49cc	f	2022-10-17 12:41:29.841793	6af522d0-2915-4e52-83a3-3690455a5fe6
+36fb0730-6259-4da1-8a80-c8de22ad4246	f	2022-10-17 12:41:29.841793	6af522d0-2915-4e52-83a3-3690455a5fe6
+474e9242-823b-4f99-813d-ed392e7f1201	f	2022-10-17 12:41:29.841793	6af522d0-2915-4e52-83a3-3690455a5fe6
+0880fbb1-a0c6-46f0-9a8e-36c986381ceb	f	2022-10-17 12:41:29.841793	6af522d0-2915-4e52-83a3-3690455a5fe6
+eb4d9930-87ab-4aef-9bce-786762687884	f	2022-10-17 12:41:29.841793	6af522d0-2915-4e52-83a3-3690455a5fe6
+618185c6-3636-49cd-b7d2-6f6f5eb3bdde	f	2022-10-17 12:41:29.841793	6af522d0-2915-4e52-83a3-3690455a5fe6
+299726d2-dba6-42b8-8209-30e1d66ea164	f	2022-10-17 12:41:29.841793	6af522d0-2915-4e52-83a3-3690455a5fe6
+203566f0-d835-47c5-aa06-932439c86573	f	2022-10-17 12:41:29.841793	6af522d0-2915-4e52-83a3-3690455a5fe6
+c73f1d71-4049-46d5-a647-d013bdeca3f0	f	2022-10-17 12:41:29.841793	6af522d0-2915-4e52-83a3-3690455a5fe6
+8a31520f-4751-4789-8ea1-fe54496725eb	f	2022-10-17 12:41:29.841793	6af522d0-2915-4e52-83a3-3690455a5fe6
+a42f1d17-9404-46d5-a647-d013bdfca3e1	f	2022-10-17 12:41:29.841793	6af522d0-2915-4e52-83a3-3690455a5fe6
+4fd2e43c-309b-4e50-8fb8-1955852d9d71	f	2022-10-17 12:41:29.841793	6af522d0-2915-4e52-83a3-3690455a5fe6
+c20206d5-bf03-4002-9a90-37d5032d9e84	f	2022-10-17 12:41:29.841793	6af522d0-2915-4e52-83a3-3690455a5fe6
+522b6657-5ca5-4368-a294-6b527703bd0b	f	2022-10-17 12:41:29.841793	6af522d0-2915-4e52-83a3-3690455a5fe6
+d0e66c4c-0c50-43f0-94f5-f85b613202d4	f	2022-10-17 12:41:29.841793	6af522d0-2915-4e52-83a3-3690455a5fe6
+2b4aa211-69a2-4ea9-9438-f701200138d3	f	2022-10-17 12:57:11.172712	eeb7c729-31f1-4c15-97e0-4678f936fd4f
+\.
+
+
+--
+-- Data for Name: templates; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.templates (id, name, template_type, created_at, updated_at, content, service_id, subject, created_by_id, version, archived, process_type, service_letter_contact_id, hidden, postage, broadcast_data) FROM stdin;
+ece42649-22a8-4d06-b87f-d52d5d3f0a27	Notify email verification code	email	2022-10-17 12:41:30.428406	\N	Hi ((name)),\n\nTo complete your registration for GOV.UK Notify please click the link below\n\n((url))	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	Confirm GOV.UK Notify registration	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+4f46df42-f795-4cc4-83bb-65ca312f49cc	Notify invitation email	email	2022-10-17 12:41:30.429961	\N	((user_name)) has invited you to collaborate on ((service_name)) on GOV.UK Notify.\n\n\n        GOV.UK Notify makes it easy to keep people updated by helping you send text messages, emails and letters.\n\n\n        Click this link to create an account on GOV.UK Notify:\n((url))\n\n\n        This invitation will stop working at midnight tomorrow. This is to keep ((service_name)) secure.\n        	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	((user_name)) has invited you to collaborate on ((service_name)) on GOV.UK Notify	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+36fb0730-6259-4da1-8a80-c8de22ad4246	Notify SMS verify code	sms	2022-10-17 12:41:30.43143	\N	((verify_code)) is your Notify authentication code	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	None	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+474e9242-823b-4f99-813d-ed392e7f1201	Notify password reset email	email	2022-10-17 12:41:30.432761	\N	Hi ((user_name)),\n\nWe received a request to reset your password on GOV.UK Notify.\n\nIf you didn't request this email, you can ignore it – your password has not been changed.\n\nTo reset your password, click this link:\n\n((url))	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	Reset your GOV.UK Notify password	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+299726d2-dba6-42b8-8209-30e1d66ea164	Notify email verify code	email	2022-10-17 12:41:31.064603	\N	Hi ((name)),\n\nTo sign in to GOV.​UK Notify please open this link:\n((url))	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	Sign in to GOV.UK Notify	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+0880fbb1-a0c6-46f0-9a8e-36c986381ceb	Your GOV.UK Notify account	email	2022-10-17 12:41:30.483447	\N	You already have a GOV.UK Notify account with this email address.\n\nSign in here: ((signin_url))\n\nIf you’ve forgotten your password, you can reset it here: ((forgot_password_url))\n\n\nIf you didn’t try to register for a GOV.UK Notify account recently, please let us know here: ((feedback_url))	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	Your GOV.UK Notify account	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+eb4d9930-87ab-4aef-9bce-786762687884	Confirm new email address	email	2022-10-17 12:41:30.601204	\N	Hi ((name)),\n\nClick this link to confirm your new email address:\n        \n\n((url))\n        \n\nIf you didn’t try to change the email address for your GOV.​UK Notify account, let us know here:\n        \n\n((feedback_url))	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	Confirm new email address	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+618185c6-3636-49cd-b7d2-6f6f5eb3bdde	Automated "You're now live" message	email	2022-10-17 12:41:30.770578	\N	Hi ((name)),\n\n((service name)) is now live on GOV.UK Notify.\n\nYou can send up to ((message limit)) messages per day.\n\nAs a live service, you’ll need to know who to contact if you have a question, or something goes wrong.\n\n^To get email updates whenever there is a problem with Notify, it’s important that you subscribe to our system status page:\nhttps://status.notifications.service.gov.uk\n\nIf our system status page shows a problem, then we’ve been alerted and are working on it – you don’t need to contact us.\n#Problems or questions during office hours\n\nOur office hours are 9.30am to 5.30pm, Monday to Friday.\n\nTo report a problem or ask a question, go to the support page:\nhttps://www.notifications.service.gov.uk/support\n\nWe’ll reply within 30 minutes whether you’re reporting a problem or just asking a question.\n\nThe team are also available to answer questions on the cross-government Slack channel:\nhttps://ukgovernmentdigital.slack.com/messages/govuk-notify\n\n#Problems or questions out of hours\n\nWe offer out of hours support for emergencies.\n\nIt’s only an emergency if:\n*   no one in your team can log in\n*   a ‘technical difficulties’ error appears when you try to upload a file\n*   a 500 response code appears when you try to send messages using the API\n\nIf you have one of these emergencies, email details to:\nooh-gov-uk-notify-support@digital.cabinet-office.gov.uk\n\n^Only use this email address for out of hours emergencies. Don’t share this address with people outside of your team.\n\nWe’ll get back to you within 30 minutes and give you hourly updates until the problem’s fixed.\n\nFor non-emergency problems or questions, use our support page and we’ll reply in office hours:\nhttps://www.notifications.service.gov.uk/support\n#Escalation for emergency problems\n\nIf we haven’t acknowledged an emergency problem you’ve reported within 30 minutes and you need to know what’s happening, you can escalate to:\n\nor\n\nThanks\nGOV.UK Notify team\n	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	((service name)) is now live on GOV.UK Notify	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+203566f0-d835-47c5-aa06-932439c86573	Notify organisation invitation email	email	2022-10-17 12:41:31.229434	\N	((user_name)) has invited you to collaborate on ((organisation_name)) on GOV.UK Notify.\n\nGOV.UK Notify makes it easy to keep people updated by helping you send text messages, emails and letters.\n\nOpen this link to create an account on GOV.UK Notify:\n((url))\n\nThis invitation will stop working at midnight tomorrow. This is to keep ((organisation_name)) secure.	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	((user_name)) has invited you to collaborate on ((organisation_name)) on GOV.UK Notify	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+c73f1d71-4049-46d5-a647-d013bdeca3f0	Email address changed by service manager	email	2022-10-17 12:41:32.150091	\N	Dear ((name)),\n\n((servicemanagername)) changed your Notify account email address to:\n\n((email address))\n\nYou’ll need to use this email address next time you sign in.\n\nThanks\n\nGOV.​UK Notify team\nhttps://www.gov.uk/notify	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	Your GOV.UK Notify email address has changed	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+8a31520f-4751-4789-8ea1-fe54496725eb	Phone number changed by service manager	sms	2022-10-17 12:41:32.151198	\N	Your mobile number was changed by ((servicemanagername)). Next time you sign in, your Notify authentication code will be sent to this phone.	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	None	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+a42f1d17-9404-46d5-a647-d013bdfca3e1	Verify email reply-to address for a service	email	2022-10-17 12:41:32.218733	\N	Hi,\n\nThis address has been provided as a reply-to email address for a GOV.​UK Notify account.\nAny replies from users to emails they receive through GOV.​UK Notify will come back to this email address.\n\nThis is just a quick check to make sure the address is valid.\n\nNo need to reply.\n\nThanks\n\nGOV.​UK Notify team\nhttps://www.gov.uk/notify	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	Your GOV.UK Notify reply-to email address	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+4fd2e43c-309b-4e50-8fb8-1955852d9d71	MOU Signed By Receipt	email	2022-10-17 12:41:29.841793	\N	Hi ((signed_by_name)),\n\n((org_name)) has accepted the GOV.​UK Notify data sharing and financial agreement. \n\nIf you need another copy of the agreement you can download it here: ((mou_link))\n\nIf you need to add Cabinet Office as a supplier, here are the details you need:\n\nTO BE ADDED MANUALLY\n\nThanks,\nGOV.​UK Notify team\n\nhttps://www.gov.uk/notify	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	You’ve accepted the GOV.​UK Notify data sharing and financial agreement	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+c20206d5-bf03-4002-9a90-37d5032d9e84	MOU Signed On Behalf Of Receipt - Signed by	email	2022-10-17 12:41:29.841793	\N	Hi ((signed_by_name)),\n\n((org_name)) has accepted the GOV.​UK Notify data sharing and financial agreement. We’ve emailed ((on_behalf_of_name)) to let them know too.\n\nIf you need another copy of the agreement you can download it here: ((mou_link))\n\nIf you need to add Cabinet Office as a supplier, here are the details you need:\n\nTO BE ADDED MANUALLY\n\nThanks,\nGOV.​UK Notify team\n\nhttps://www.gov.uk/notify	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	You’ve accepted the GOV.​UK Notify data sharing and financial agreement	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+522b6657-5ca5-4368-a294-6b527703bd0b	MOU Signed On Behalf Of Receipt - On Behalf Of	email	2022-10-17 12:41:29.841793	\N	Hi ((on_behalf_of_name)),\n\n((signed_by_name)) has accepted the GOV.​UK Notify data sharing and financial agreement on your behalf, for ((org_name)).\n\nGOV.​UK Notify lets teams in the public sector send emails, text messages and letters. It’s built and run by a team in the Government Digital Service (part of Cabinet Office).\n\nIf you need another copy of the agreement you can download it here: ((mou_link))\n\nIf you need to add Cabinet Office as a supplier, here are the details you need.\n\nTO BE ADDED MANUALLY\n\nThanks,\nGOV.​UK Notify team\n\nhttps://www.gov.uk/notify	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	((org_name)) has accepted the GOV.​UK Notify data sharing and financial agreement	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+d0e66c4c-0c50-43f0-94f5-f85b613202d4	MOU Signed Notify Team Alert	email	2022-10-17 12:41:29.841793	\N	What’s up Notifiers,\n\n((signed_by_name)) just accepted the data sharing and financial agreement for ((org_name)).\n\nSee how ((org_name)) is using Notify here: ((org_dashboard_link))	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	Someone signed an MOU for an org on Notify	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+46152f7c-6901-41d5-8590-a5624d0d4359	Notify broadcast invitation email	email	2022-10-17 12:41:32.437801	\N	((user_name)) has invited you to join ((service_name)) on GOV.UK Notify.\n\nIn an emergency, use Notify to broadcast an alert, warning the public about an imminent risk to life.\n\nUse this link to join the team:\n((url))\n\nThis invitation will stop working at midnight tomorrow. This is to keep ((service_name)) secure.\n\nThanks\n\nGOV.​UK Notify team\nhttps://www.gov.uk/notify\n	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	((user_name)) has invited you to join ((service_name)) on GOV.UK Notify	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+11fad854-fd38-4a7c-bd17-805fb13dfc12	Notify daily letter volumes	email	2022-10-17 12:41:32.514099	\N	((total_volume)) letters (((total_sheets)) sheets) sent via Notify are coming in today's batch. These include: \n\n((first_class_volume)) first class letters (((first_class_sheets)) sheets).\n((second_class_volume)) second class letters (((second_class_sheets)) sheets).\n((international_volume)) international letters (((international_sheets)) sheets).\n\nThanks\n\nGOV.​UK Notify team\nhttps://www.gov.uk/notify	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	Notify letter volume for ((date)): ((total_volume)) letters, ((total_sheets)) sheets	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+2b4aa211-69a2-4ea9-9438-f701200138d3	Example text message template	sms	2022-10-17 12:57:11	2022-10-17 12:58:22.234503	Hey ((name)), I’m trying out Notify. Today is ((day of week)) and my favourite colour is ((colour)).	9f8e8a80-488c-42d9-90c3-767eaea1e050	\N	eeb7c729-31f1-4c15-97e0-4678f936fd4f	2	t	normal	\N	f	\N	\N
+\.
+
+
+--
+-- Data for Name: templates_history; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.templates_history (id, name, template_type, created_at, updated_at, content, service_id, subject, created_by_id, version, archived, process_type, service_letter_contact_id, hidden, postage, broadcast_data) FROM stdin;
+4f46df42-f795-4cc4-83bb-65ca312f49cc	Notify invitation email	email	2022-10-17 12:41:30.429451	\N	((user_name)) has invited you to collaborate on ((service_name)) on GOV.UK Notify.\n\n\n        GOV.UK Notify makes it easy to keep people updated by helping you send text messages, emails and letters.\n\n\n        Click this link to create an account on GOV.UK Notify:\n((url))\n\n\n        This invitation will stop working at midnight tomorrow. This is to keep ((service_name)) secure.\n        	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	((user_name)) has invited you to collaborate on ((service_name)) on GOV.UK Notify	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+36fb0730-6259-4da1-8a80-c8de22ad4246	Notify SMS verify code	sms	2022-10-17 12:41:30.430828	\N	((verify_code)) is your Notify authentication code	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	None	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+474e9242-823b-4f99-813d-ed392e7f1201	Notify password reset email	email	2022-10-17 12:41:30.432089	\N	Hi ((user_name)),\n\nWe received a request to reset your password on GOV.UK Notify.\n\nIf you didn't request this email, you can ignore it – your password has not been changed.\n\nTo reset your password, click this link:\n\n((url))	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	Reset your GOV.UK Notify password	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+ece42649-22a8-4d06-b87f-d52d5d3f0a27	Notify email verification code	email	2022-10-17 12:41:30.438851	\N	Hi ((name)),\n\nTo complete your registration for GOV.UK Notify please click the link below\n\n((url))	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	Confirm GOV.UK Notify registration	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+0880fbb1-a0c6-46f0-9a8e-36c986381ceb	Your GOV.UK Notify account	email	2022-10-17 12:41:30.483107	\N	You already have a GOV.UK Notify account with this email address.\n\nSign in here: ((signin_url))\n\nIf you’ve forgotten your password, you can reset it here: ((forgot_password_url))\n\n\nIf you didn’t try to register for a GOV.UK Notify account recently, please let us know here: ((feedback_url))	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	Your GOV.UK Notify account	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+eb4d9930-87ab-4aef-9bce-786762687884	Confirm new email address	email	2022-10-17 12:41:30.600723	\N	Hi ((name)),\n\nClick this link to confirm your new email address:\n        \n\n((url))\n        \n\nIf you didn’t try to change the email address for your GOV.​UK Notify account, let us know here:\n        \n\n((feedback_url))	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	Confirm new email address	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+618185c6-3636-49cd-b7d2-6f6f5eb3bdde	Automated "You're now live" message	email	2022-10-17 12:41:30.769673	\N	Hi ((name)),\n\n((service name)) is now live on GOV.UK Notify.\n\nYou can send up to ((message limit)) messages per day.\n\nAs a live service, you’ll need to know who to contact if you have a question, or something goes wrong.\n\n^To get email updates whenever there is a problem with Notify, it’s important that you subscribe to our system status page:\nhttps://status.notifications.service.gov.uk\n\nIf our system status page shows a problem, then we’ve been alerted and are working on it – you don’t need to contact us.\n#Problems or questions during office hours\n\nOur office hours are 9.30am to 5.30pm, Monday to Friday.\n\nTo report a problem or ask a question, go to the support page:\nhttps://www.notifications.service.gov.uk/support\n\nWe’ll reply within 30 minutes whether you’re reporting a problem or just asking a question.\n\nThe team are also available to answer questions on the cross-government Slack channel:\nhttps://ukgovernmentdigital.slack.com/messages/govuk-notify\n\n#Problems or questions out of hours\n\nWe offer out of hours support for emergencies.\n\nIt’s only an emergency if:\n*   no one in your team can log in\n*   a ‘technical difficulties’ error appears when you try to upload a file\n*   a 500 response code appears when you try to send messages using the API\n\nIf you have one of these emergencies, email details to:\nooh-gov-uk-notify-support@digital.cabinet-office.gov.uk\n\n^Only use this email address for out of hours emergencies. Don’t share this address with people outside of your team.\n\nWe’ll get back to you within 30 minutes and give you hourly updates until the problem’s fixed.\n\nFor non-emergency problems or questions, use our support page and we’ll reply in office hours:\nhttps://www.notifications.service.gov.uk/support\n#Escalation for emergency problems\n\nIf we haven’t acknowledged an emergency problem you’ve reported within 30 minutes and you need to know what’s happening, you can escalate to:\n\nor\n\nThanks\nGOV.UK Notify team\n	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	((service name)) is now live on GOV.UK Notify	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+299726d2-dba6-42b8-8209-30e1d66ea164	Notify email verify code	email	2022-10-17 12:41:31.063794	\N	Hi ((name)),\n\nTo sign in to GOV.​UK Notify please open this link:\n((url))	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	Sign in to GOV.UK Notify	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+203566f0-d835-47c5-aa06-932439c86573	Notify organisation invitation email	email	2022-10-17 12:41:31.228632	\N	((user_name)) has invited you to collaborate on ((organisation_name)) on GOV.UK Notify.\n\nGOV.UK Notify makes it easy to keep people updated by helping you send text messages, emails and letters.\n\nOpen this link to create an account on GOV.UK Notify:\n((url))\n\nThis invitation will stop working at midnight tomorrow. This is to keep ((organisation_name)) secure.	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	((user_name)) has invited you to collaborate on ((organisation_name)) on GOV.UK Notify	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+c73f1d71-4049-46d5-a647-d013bdeca3f0	Email address changed by service manager	email	2022-10-17 12:41:32.149373	\N	Dear ((name)),\n\n((servicemanagername)) changed your Notify account email address to:\n\n((email address))\n\nYou’ll need to use this email address next time you sign in.\n\nThanks\n\nGOV.​UK Notify team\nhttps://www.gov.uk/notify	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	Your GOV.UK Notify email address has changed	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+8a31520f-4751-4789-8ea1-fe54496725eb	Phone number changed by service manager	sms	2022-10-17 12:41:32.150669	\N	Your mobile number was changed by ((servicemanagername)). Next time you sign in, your Notify authentication code will be sent to this phone.	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	None	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+a42f1d17-9404-46d5-a647-d013bdfca3e1	Verify email reply-to address for a service	email	2022-10-17 12:41:32.217906	\N	Hi,\n\nThis address has been provided as a reply-to email address for a GOV.​UK Notify account.\nAny replies from users to emails they receive through GOV.​UK Notify will come back to this email address.\n\nThis is just a quick check to make sure the address is valid.\n\nNo need to reply.\n\nThanks\n\nGOV.​UK Notify team\nhttps://www.gov.uk/notify	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	Your GOV.UK Notify reply-to email address	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+4fd2e43c-309b-4e50-8fb8-1955852d9d71	MOU Signed By Receipt	email	2022-10-17 12:41:29.841793	\N	Hi ((signed_by_name)),\n\n((org_name)) has accepted the GOV.​UK Notify data sharing and financial agreement. \n\nIf you need another copy of the agreement you can download it here: ((mou_link))\n\nIf you need to add Cabinet Office as a supplier, here are the details you need:\n\nTO BE ADDED MANUALLY\n\nThanks,\nGOV.​UK Notify team\n\nhttps://www.gov.uk/notify	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	You’ve accepted the GOV.​UK Notify data sharing and financial agreement	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+c20206d5-bf03-4002-9a90-37d5032d9e84	MOU Signed On Behalf Of Receipt - Signed by	email	2022-10-17 12:41:29.841793	\N	Hi ((signed_by_name)),\n\n((org_name)) has accepted the GOV.​UK Notify data sharing and financial agreement. We’ve emailed ((on_behalf_of_name)) to let them know too.\n\nIf you need another copy of the agreement you can download it here: ((mou_link))\n\nIf you need to add Cabinet Office as a supplier, here are the details you need:\n\nTO BE ADDED MANUALLY\n\nThanks,\nGOV.​UK Notify team\n\nhttps://www.gov.uk/notify	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	You’ve accepted the GOV.​UK Notify data sharing and financial agreement	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+522b6657-5ca5-4368-a294-6b527703bd0b	MOU Signed On Behalf Of Receipt - On Behalf Of	email	2022-10-17 12:41:29.841793	\N	Hi ((on_behalf_of_name)),\n\n((signed_by_name)) has accepted the GOV.​UK Notify data sharing and financial agreement on your behalf, for ((org_name)).\n\nGOV.​UK Notify lets teams in the public sector send emails, text messages and letters. It’s built and run by a team in the Government Digital Service (part of Cabinet Office).\n\nIf you need another copy of the agreement you can download it here: ((mou_link))\n\nIf you need to add Cabinet Office as a supplier, here are the details you need.\n\nTO BE ADDED MANUALLY\n\nThanks,\nGOV.​UK Notify team\n\nhttps://www.gov.uk/notify	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	((org_name)) has accepted the GOV.​UK Notify data sharing and financial agreement	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+d0e66c4c-0c50-43f0-94f5-f85b613202d4	MOU Signed Notify Team Alert	email	2022-10-17 12:41:29.841793	\N	What’s up Notifiers,\n\n((signed_by_name)) just accepted the data sharing and financial agreement for ((org_name)).\n\nSee how ((org_name)) is using Notify here: ((org_dashboard_link))	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	Someone signed an MOU for an org on Notify	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+46152f7c-6901-41d5-8590-a5624d0d4359	Notify broadcast invitation email	email	2022-10-17 12:41:32.43684	\N	((user_name)) has invited you to join ((service_name)) on GOV.UK Notify.\n\nIn an emergency, use Notify to broadcast an alert, warning the public about an imminent risk to life.\n\nUse this link to join the team:\n((url))\n\nThis invitation will stop working at midnight tomorrow. This is to keep ((service_name)) secure.\n\nThanks\n\nGOV.​UK Notify team\nhttps://www.gov.uk/notify\n	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	((user_name)) has invited you to join ((service_name)) on GOV.UK Notify	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+11fad854-fd38-4a7c-bd17-805fb13dfc12	Notify daily letter volumes	email	2022-10-17 12:41:32.513282	\N	((total_volume)) letters (((total_sheets)) sheets) sent via Notify are coming in today's batch. These include: \n\n((first_class_volume)) first class letters (((first_class_sheets)) sheets).\n((second_class_volume)) second class letters (((second_class_sheets)) sheets).\n((international_volume)) international letters (((international_sheets)) sheets).\n\nThanks\n\nGOV.​UK Notify team\nhttps://www.gov.uk/notify	d6aa2c68-a2d9-4437-ab19-3ae8eb202553	Notify letter volume for ((date)): ((total_volume)) letters, ((total_sheets)) sheets	6af522d0-2915-4e52-83a3-3690455a5fe6	1	f	normal	\N	f	\N	\N
+2b4aa211-69a2-4ea9-9438-f701200138d3	Example text message template	sms	2022-10-17 12:57:11.16496	\N	Hey ((name)), I’m trying out Notify. Today is ((day of week)) and my favourite colour is ((colour)).	9f8e8a80-488c-42d9-90c3-767eaea1e050	\N	eeb7c729-31f1-4c15-97e0-4678f936fd4f	1	f	normal	\N	f	\N	\N
+2b4aa211-69a2-4ea9-9438-f701200138d3	Example text message template	sms	2022-10-17 12:57:11	2022-10-17 12:58:22.234503	Hey ((name)), I’m trying out Notify. Today is ((day of week)) and my favourite colour is ((colour)).	9f8e8a80-488c-42d9-90c3-767eaea1e050	\N	eeb7c729-31f1-4c15-97e0-4678f936fd4f	2	t	normal	\N	f	\N	\N
+\.
+
+
+--
+-- Data for Name: user_folder_permissions; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.user_folder_permissions (user_id, template_folder_id, service_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: user_to_organisation; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.user_to_organisation (user_id, organisation_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: user_to_service; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.user_to_service (user_id, service_id) FROM stdin;
+6af522d0-2915-4e52-83a3-3690455a5fe6	d6aa2c68-a2d9-4437-ab19-3ae8eb202553
+eeb7c729-31f1-4c15-97e0-4678f936fd4f	9f8e8a80-488c-42d9-90c3-767eaea1e050
+4cad9e65-5cbb-47ac-aafc-a6b662142e82	9f8e8a80-488c-42d9-90c3-767eaea1e050
+\.
+
+
+--
+-- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.users (id, name, email_address, created_at, updated_at, _password, mobile_number, password_changed_at, logged_in_at, failed_login_count, state, platform_admin, current_session_id, auth_type, email_access_validated_at) FROM stdin;
+6af522d0-2915-4e52-83a3-3690455a5fe6	Notify service user	notify-service-user@digital.cabinet-office.gov.uk	2022-10-17 12:41:30.423775	\N	$2b$10$poD.by6bfXRSEtlVWbcq0.wLOzZNF37DZbky7bJzxJhL.eyd9eA6C	+441234123412	2022-10-17 12:41:30.423775	\N	0	active	f	\N	sms_auth	2022-10-17 12:41:30.423775
+eeb7c729-31f1-4c15-97e0-4678f936fd4f	Notify Admin	notify.admin@fujitsu.com	2022-10-17 12:44:00.278043	2022-10-17 15:42:09.2087	$2b$10$nhvTukeqF2yP/jnrMVmej.5nyUQ.Z3lJf3FItQLIdS8r2OyJizKuG	07700900000	2022-10-17 12:44:00.275504	2022-10-17 12:45:44.557696	0	active	t	\N	sms_auth	2022-10-17 12:44:00.275516
+4cad9e65-5cbb-47ac-aafc-a6b662142e82	Notify User	notify.user@fujitsu.com	2022-10-17 15:43:03.162231	2022-10-17 15:48:43.975064	$2b$10$5Wree9.nVXZxsf1rf.Mn3ek7Sg0rxOPzZODfCrLH2KflhNvAebT5O	07700900000	2022-10-17 15:43:03.159021	2022-10-17 15:48:43.940396	0	active	f	7d14d8e0-40f0-4c99-bbfc-a1f187bf4bdc	sms_auth	2022-10-17 15:43:03.159036
+\.
+
+
+--
+-- Data for Name: verify_codes; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.verify_codes (id, user_id, _code, code_type, expiry_datetime, code_used, created_at) FROM stdin;
+3bb0426d-72f2-49a2-991c-98687ce2c495	eeb7c729-31f1-4c15-97e0-4678f936fd4f	$2b$10$J7CefM8aFEiOt6rgRDdP4eBOg3BOt66vRfkk1W2EIa6G73xh1ejV.	sms	2022-10-17 13:15:33.96566	t	2022-10-17 12:45:34.023151
+351c33c1-870d-49ee-939d-8afcaf7bc9ec	4cad9e65-5cbb-47ac-aafc-a6b662142e82	$2b$10$PQktM5M9UCqygHNSt0eylOarhjweYi0y7PfbyjpTR8jAjjw7ZcNj2	sms	2022-10-17 16:13:03.200527	f	2022-10-17 15:43:03.286849
+476ed55a-93ae-4b88-a00c-008ff9b3bbef	4cad9e65-5cbb-47ac-aafc-a6b662142e82	$2b$10$5nzbSiwy6.OgcGTWbDJp0OSXu0VA1xWIsLHClIyNa299dfnKN0ICu	sms	2022-10-17 16:18:08.229032	t	2022-10-17 15:48:08.318486
+\.
+
+
+--
+-- Data for Name: webauthn_credential; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.webauthn_credential (id, user_id, name, credential_data, registration_response, created_at, updated_at) FROM stdin;
+\.
+
+
+--
+-- Name: broadcast_provider_message_number_seq; Type: SEQUENCE SET; Schema: public; Owner: root
+--
+
+SELECT pg_catalog.setval('public.broadcast_provider_message_number_seq', 1, false);
+
+
+--
+-- Name: alembic_version alembic_version_pkc; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.alembic_version
+    ADD CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num);
+
+
+--
+-- Name: annual_billing annual_billing_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.annual_billing
+    ADD CONSTRAINT annual_billing_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: api_keys_history api_keys_history_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.api_keys_history
+    ADD CONSTRAINT api_keys_history_pkey PRIMARY KEY (id, version);
+
+
+--
+-- Name: api_keys api_keys_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.api_keys
+    ADD CONSTRAINT api_keys_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: api_keys api_keys_secret_key; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.api_keys
+    ADD CONSTRAINT api_keys_secret_key UNIQUE (secret);
+
+
+--
+-- Name: auth_type auth_type_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.auth_type
+    ADD CONSTRAINT auth_type_pkey PRIMARY KEY (name);
+
+
+--
+-- Name: branding_type branding_type_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.branding_type
+    ADD CONSTRAINT branding_type_pkey PRIMARY KEY (name);
+
+
+--
+-- Name: broadcast_channel_types broadcast_channel_types_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.broadcast_channel_types
+    ADD CONSTRAINT broadcast_channel_types_pkey PRIMARY KEY (name);
+
+
+--
+-- Name: broadcast_event broadcast_event_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.broadcast_event
+    ADD CONSTRAINT broadcast_event_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: broadcast_message broadcast_message_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.broadcast_message
+    ADD CONSTRAINT broadcast_message_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: broadcast_provider_message broadcast_provider_message_broadcast_event_id_provider_key; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.broadcast_provider_message
+    ADD CONSTRAINT broadcast_provider_message_broadcast_event_id_provider_key UNIQUE (broadcast_event_id, provider);
+
+
+--
+-- Name: broadcast_provider_message_number broadcast_provider_message_number_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.broadcast_provider_message_number
+    ADD CONSTRAINT broadcast_provider_message_number_pkey PRIMARY KEY (broadcast_provider_message_number);
+
+
+--
+-- Name: broadcast_provider_message broadcast_provider_message_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.broadcast_provider_message
+    ADD CONSTRAINT broadcast_provider_message_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: broadcast_provider_message_status_type broadcast_provider_message_status_type_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.broadcast_provider_message_status_type
+    ADD CONSTRAINT broadcast_provider_message_status_type_pkey PRIMARY KEY (name);
+
+
+--
+-- Name: broadcast_provider_types broadcast_provider_types_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.broadcast_provider_types
+    ADD CONSTRAINT broadcast_provider_types_pkey PRIMARY KEY (name);
+
+
+--
+-- Name: broadcast_status_type broadcast_status_type_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.broadcast_status_type
+    ADD CONSTRAINT broadcast_status_type_pkey PRIMARY KEY (name);
+
+
+--
+-- Name: complaints complaints_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.complaints
+    ADD CONSTRAINT complaints_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: daily_sorted_letter daily_sorted_letter_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.daily_sorted_letter
+    ADD CONSTRAINT daily_sorted_letter_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: domain domain_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.domain
+    ADD CONSTRAINT domain_pkey PRIMARY KEY (domain);
+
+
+--
+-- Name: email_branding email_branding_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.email_branding
+    ADD CONSTRAINT email_branding_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: events events_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.events
+    ADD CONSTRAINT events_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: ft_billing ft_billing_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.ft_billing
+    ADD CONSTRAINT ft_billing_pkey PRIMARY KEY (bst_date, template_id, service_id, notification_type, provider, rate_multiplier, international, rate, postage);
+
+
+--
+-- Name: ft_notification_status ft_notification_status_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.ft_notification_status
+    ADD CONSTRAINT ft_notification_status_pkey PRIMARY KEY (bst_date, template_id, service_id, job_id, notification_type, key_type, notification_status);
+
+
+--
+-- Name: ft_processing_time ft_processing_time_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.ft_processing_time
+    ADD CONSTRAINT ft_processing_time_pkey PRIMARY KEY (bst_date);
+
+
+--
+-- Name: inbound_numbers inbound_numbers_number_key; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.inbound_numbers
+    ADD CONSTRAINT inbound_numbers_number_key UNIQUE (number);
+
+
+--
+-- Name: inbound_numbers inbound_numbers_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.inbound_numbers
+    ADD CONSTRAINT inbound_numbers_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: inbound_sms_history inbound_sms_history_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.inbound_sms_history
+    ADD CONSTRAINT inbound_sms_history_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: inbound_sms inbound_sms_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.inbound_sms
+    ADD CONSTRAINT inbound_sms_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: invite_status_type invite_status_type_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.invite_status_type
+    ADD CONSTRAINT invite_status_type_pkey PRIMARY KEY (name);
+
+
+--
+-- Name: invited_organisation_users invited_organisation_users_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.invited_organisation_users
+    ADD CONSTRAINT invited_organisation_users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: invited_users invited_users_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.invited_users
+    ADD CONSTRAINT invited_users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: template_folder ix_id_service_id; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.template_folder
+    ADD CONSTRAINT ix_id_service_id UNIQUE (id, service_id);
+
+
+--
+-- Name: job_status job_status_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.job_status
+    ADD CONSTRAINT job_status_pkey PRIMARY KEY (name);
+
+
+--
+-- Name: jobs jobs_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.jobs
+    ADD CONSTRAINT jobs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: key_types key_types_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.key_types
+    ADD CONSTRAINT key_types_pkey PRIMARY KEY (name);
+
+
+--
+-- Name: letter_branding letter_branding_filename_key; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.letter_branding
+    ADD CONSTRAINT letter_branding_filename_key UNIQUE (filename);
+
+
+--
+-- Name: letter_branding letter_branding_name_key; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.letter_branding
+    ADD CONSTRAINT letter_branding_name_key UNIQUE (name);
+
+
+--
+-- Name: letter_branding letter_branding_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.letter_branding
+    ADD CONSTRAINT letter_branding_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: letter_rates letter_rates_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.letter_rates
+    ADD CONSTRAINT letter_rates_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: notification_history notification_history_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.notification_history
+    ADD CONSTRAINT notification_history_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: notification_status_types notification_status_types_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.notification_status_types
+    ADD CONSTRAINT notification_status_types_pkey PRIMARY KEY (name);
+
+
+--
+-- Name: notifications notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: organisation organisation_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.organisation
+    ADD CONSTRAINT organisation_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: organisation_types organisation_types_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.organisation_types
+    ADD CONSTRAINT organisation_types_pkey PRIMARY KEY (name);
+
+
+--
+-- Name: permissions permissions_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.permissions
+    ADD CONSTRAINT permissions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: provider_details_history provider_details_history_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.provider_details_history
+    ADD CONSTRAINT provider_details_history_pkey PRIMARY KEY (id, version);
+
+
+--
+-- Name: provider_details provider_details_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.provider_details
+    ADD CONSTRAINT provider_details_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: rates rates_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.rates
+    ADD CONSTRAINT rates_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: returned_letters returned_letters_notification_id_key; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.returned_letters
+    ADD CONSTRAINT returned_letters_notification_id_key UNIQUE (notification_id);
+
+
+--
+-- Name: returned_letters returned_letters_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.returned_letters
+    ADD CONSTRAINT returned_letters_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: service_broadcast_provider_restriction service_broadcast_provider_restriction_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_broadcast_provider_restriction
+    ADD CONSTRAINT service_broadcast_provider_restriction_pkey PRIMARY KEY (service_id);
+
+
+--
+-- Name: service_broadcast_settings service_broadcast_settings_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_broadcast_settings
+    ADD CONSTRAINT service_broadcast_settings_pkey PRIMARY KEY (service_id);
+
+
+--
+-- Name: service_callback_api_history service_callback_api_history_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_callback_api_history
+    ADD CONSTRAINT service_callback_api_history_pkey PRIMARY KEY (id, version);
+
+
+--
+-- Name: service_callback_api service_callback_api_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_callback_api
+    ADD CONSTRAINT service_callback_api_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: service_callback_type service_callback_type_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_callback_type
+    ADD CONSTRAINT service_callback_type_pkey PRIMARY KEY (name);
+
+
+--
+-- Name: service_contact_list service_contact_list_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_contact_list
+    ADD CONSTRAINT service_contact_list_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: service_data_retention service_data_retention_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_data_retention
+    ADD CONSTRAINT service_data_retention_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: service_email_reply_to service_email_reply_to_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_email_reply_to
+    ADD CONSTRAINT service_email_reply_to_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: service_inbound_api_history service_inbound_api_history_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_inbound_api_history
+    ADD CONSTRAINT service_inbound_api_history_pkey PRIMARY KEY (id, version);
+
+
+--
+-- Name: service_inbound_api service_inbound_api_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_inbound_api
+    ADD CONSTRAINT service_inbound_api_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: service_letter_branding service_letter_branding_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_letter_branding
+    ADD CONSTRAINT service_letter_branding_pkey PRIMARY KEY (service_id);
+
+
+--
+-- Name: service_letter_contacts service_letter_contacts_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_letter_contacts
+    ADD CONSTRAINT service_letter_contacts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: service_permission_types service_permission_types_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_permission_types
+    ADD CONSTRAINT service_permission_types_pkey PRIMARY KEY (name);
+
+
+--
+-- Name: service_permissions service_permissions_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_permissions
+    ADD CONSTRAINT service_permissions_pkey PRIMARY KEY (service_id, permission);
+
+
+--
+-- Name: service_sms_senders service_sms_senders_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_sms_senders
+    ADD CONSTRAINT service_sms_senders_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: service_whitelist service_whitelist_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_whitelist
+    ADD CONSTRAINT service_whitelist_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: services services_email_from_key; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.services
+    ADD CONSTRAINT services_email_from_key UNIQUE (email_from);
+
+
+--
+-- Name: services_history services_history_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.services_history
+    ADD CONSTRAINT services_history_pkey PRIMARY KEY (id, version);
+
+
+--
+-- Name: services services_name_key; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.services
+    ADD CONSTRAINT services_name_key UNIQUE (name);
+
+
+--
+-- Name: services services_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.services
+    ADD CONSTRAINT services_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: template_folder_map template_folder_map_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.template_folder_map
+    ADD CONSTRAINT template_folder_map_pkey PRIMARY KEY (template_id);
+
+
+--
+-- Name: template_folder template_folder_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.template_folder
+    ADD CONSTRAINT template_folder_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: template_process_type template_process_type_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.template_process_type
+    ADD CONSTRAINT template_process_type_pkey PRIMARY KEY (name);
+
+
+--
+-- Name: template_redacted template_redacted_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.template_redacted
+    ADD CONSTRAINT template_redacted_pkey PRIMARY KEY (template_id);
+
+
+--
+-- Name: templates_history templates_history_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.templates_history
+    ADD CONSTRAINT templates_history_pkey PRIMARY KEY (id, version);
+
+
+--
+-- Name: templates templates_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.templates
+    ADD CONSTRAINT templates_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: email_branding_to_organisation uix_email_branding_to_organisation; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.email_branding_to_organisation
+    ADD CONSTRAINT uix_email_branding_to_organisation PRIMARY KEY (organisation_id, email_branding_id);
+
+
+--
+-- Name: daily_sorted_letter uix_file_name_billing_day; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.daily_sorted_letter
+    ADD CONSTRAINT uix_file_name_billing_day UNIQUE (file_name, billing_day);
+
+
+--
+-- Name: service_callback_api uix_service_callback_type; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_callback_api
+    ADD CONSTRAINT uix_service_callback_type UNIQUE (service_id, callback_type);
+
+
+--
+-- Name: service_data_retention uix_service_data_retention; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_data_retention
+    ADD CONSTRAINT uix_service_data_retention UNIQUE (service_id, notification_type);
+
+
+--
+-- Name: service_email_branding uix_service_email_branding_one_per_service; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_email_branding
+    ADD CONSTRAINT uix_service_email_branding_one_per_service PRIMARY KEY (service_id);
+
+
+--
+-- Name: annual_billing uix_service_id_financial_year_start; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.annual_billing
+    ADD CONSTRAINT uix_service_id_financial_year_start UNIQUE (service_id, financial_year_start);
+
+
+--
+-- Name: permissions uix_service_user_permission; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.permissions
+    ADD CONSTRAINT uix_service_user_permission UNIQUE (service_id, user_id, permission);
+
+
+--
+-- Name: user_to_organisation uix_user_to_organisation; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.user_to_organisation
+    ADD CONSTRAINT uix_user_to_organisation UNIQUE (user_id, organisation_id);
+
+
+--
+-- Name: user_to_service uix_user_to_service; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.user_to_service
+    ADD CONSTRAINT uix_user_to_service UNIQUE (user_id, service_id);
+
+
+--
+-- Name: email_branding uq_email_branding_name; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.email_branding
+    ADD CONSTRAINT uq_email_branding_name UNIQUE (name);
+
+
+--
+-- Name: notifications uq_notifications_job_row_number; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT uq_notifications_job_row_number UNIQUE (job_id, job_row_number);
+
+
+--
+-- Name: user_folder_permissions user_folder_permissions_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.user_folder_permissions
+    ADD CONSTRAINT user_folder_permissions_pkey PRIMARY KEY (user_id, template_folder_id, service_id);
+
+
+--
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: verify_codes verify_codes_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.verify_codes
+    ADD CONSTRAINT verify_codes_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: webauthn_credential webauthn_credential_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.webauthn_credential
+    ADD CONSTRAINT webauthn_credential_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: ix_annual_billing_service_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_annual_billing_service_id ON public.annual_billing USING btree (service_id);
+
+
+--
+-- Name: ix_api_keys_created_by_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_api_keys_created_by_id ON public.api_keys USING btree (created_by_id);
+
+
+--
+-- Name: ix_api_keys_history_created_by_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_api_keys_history_created_by_id ON public.api_keys_history USING btree (created_by_id);
+
+
+--
+-- Name: ix_api_keys_history_key_type; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_api_keys_history_key_type ON public.api_keys_history USING btree (key_type);
+
+
+--
+-- Name: ix_api_keys_history_service_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_api_keys_history_service_id ON public.api_keys_history USING btree (service_id);
+
+
+--
+-- Name: ix_api_keys_key_type; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_api_keys_key_type ON public.api_keys USING btree (key_type);
+
+
+--
+-- Name: ix_api_keys_service_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_api_keys_service_id ON public.api_keys USING btree (service_id);
+
+
+--
+-- Name: ix_complaints_notification_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_complaints_notification_id ON public.complaints USING btree (notification_id);
+
+
+--
+-- Name: ix_complaints_service_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_complaints_service_id ON public.complaints USING btree (service_id);
+
+
+--
+-- Name: ix_daily_sorted_letter_billing_day; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_daily_sorted_letter_billing_day ON public.daily_sorted_letter USING btree (billing_day);
+
+
+--
+-- Name: ix_daily_sorted_letter_file_name; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_daily_sorted_letter_file_name ON public.daily_sorted_letter USING btree (file_name);
+
+
+--
+-- Name: ix_email_branding_brand_type; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_email_branding_brand_type ON public.email_branding USING btree (brand_type);
+
+
+--
+-- Name: ix_ft_billing_bst_date; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_ft_billing_bst_date ON public.ft_billing USING btree (bst_date);
+
+
+--
+-- Name: ix_ft_billing_service_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_ft_billing_service_id ON public.ft_billing USING btree (service_id);
+
+
+--
+-- Name: ix_ft_billing_template_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_ft_billing_template_id ON public.ft_billing USING btree (template_id);
+
+
+--
+-- Name: ix_ft_notification_status_bst_date; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_ft_notification_status_bst_date ON public.ft_notification_status USING btree (bst_date);
+
+
+--
+-- Name: ix_ft_notification_status_job_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_ft_notification_status_job_id ON public.ft_notification_status USING btree (job_id);
+
+
+--
+-- Name: ix_ft_notification_status_service_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_ft_notification_status_service_id ON public.ft_notification_status USING btree (service_id);
+
+
+--
+-- Name: ix_ft_notification_status_template_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_ft_notification_status_template_id ON public.ft_notification_status USING btree (template_id);
+
+
+--
+-- Name: ix_ft_processing_time_bst_date; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_ft_processing_time_bst_date ON public.ft_processing_time USING btree (bst_date);
+
+
+--
+-- Name: ix_inbound_numbers_service_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE UNIQUE INDEX ix_inbound_numbers_service_id ON public.inbound_numbers USING btree (service_id);
+
+
+--
+-- Name: ix_inbound_sms_history_service_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_inbound_sms_history_service_id ON public.inbound_sms_history USING btree (service_id);
+
+
+--
+-- Name: ix_inbound_sms_service_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_inbound_sms_service_id ON public.inbound_sms USING btree (service_id);
+
+
+--
+-- Name: ix_inbound_sms_user_number; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_inbound_sms_user_number ON public.inbound_sms USING btree (user_number);
+
+
+--
+-- Name: ix_invited_users_auth_type; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_invited_users_auth_type ON public.invited_users USING btree (auth_type);
+
+
+--
+-- Name: ix_invited_users_service_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_invited_users_service_id ON public.invited_users USING btree (service_id);
+
+
+--
+-- Name: ix_invited_users_user_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_invited_users_user_id ON public.invited_users USING btree (user_id);
+
+
+--
+-- Name: ix_jobs_created_by_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_jobs_created_by_id ON public.jobs USING btree (created_by_id);
+
+
+--
+-- Name: ix_jobs_job_status; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_jobs_job_status ON public.jobs USING btree (job_status);
+
+
+--
+-- Name: ix_jobs_scheduled_for; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_jobs_scheduled_for ON public.jobs USING btree (scheduled_for);
+
+
+--
+-- Name: ix_jobs_service_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_jobs_service_id ON public.jobs USING btree (service_id);
+
+
+--
+-- Name: ix_jobs_template_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_jobs_template_id ON public.jobs USING btree (template_id);
+
+
+--
+-- Name: ix_notification_history_job_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_notification_history_job_id ON public.notification_history USING btree (job_id);
+
+
+--
+-- Name: ix_notification_history_reference; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_notification_history_reference ON public.notification_history USING btree (reference);
+
+
+--
+-- Name: ix_notification_history_service_id_composite; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_notification_history_service_id_composite ON public.notification_history USING btree (service_id, key_type, notification_type, created_at);
+
+
+--
+-- Name: ix_notifications_client_reference; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_notifications_client_reference ON public.notifications USING btree (client_reference);
+
+
+--
+-- Name: ix_notifications_created_at; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_notifications_created_at ON public.notifications USING btree (created_at);
+
+
+--
+-- Name: ix_notifications_job_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_notifications_job_id ON public.notifications USING btree (job_id);
+
+
+--
+-- Name: ix_notifications_notification_type_composite; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_notifications_notification_type_composite ON public.notifications USING btree (notification_type, notification_status, created_at);
+
+
+--
+-- Name: ix_notifications_reference; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_notifications_reference ON public.notifications USING btree (reference);
+
+
+--
+-- Name: ix_notifications_service_created_at; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_notifications_service_created_at ON public.notifications USING btree (service_id, created_at);
+
+
+--
+-- Name: ix_notifications_service_id_composite; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_notifications_service_id_composite ON public.notifications USING btree (service_id, notification_type, notification_status, created_at);
+
+
+--
+-- Name: ix_notifications_template_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_notifications_template_id ON public.notifications USING btree (template_id);
+
+
+--
+-- Name: ix_organisation_name; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE UNIQUE INDEX ix_organisation_name ON public.organisation USING btree (name);
+
+
+--
+-- Name: ix_permissions_service_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_permissions_service_id ON public.permissions USING btree (service_id);
+
+
+--
+-- Name: ix_permissions_user_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_permissions_user_id ON public.permissions USING btree (user_id);
+
+
+--
+-- Name: ix_provider_details_created_by_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_provider_details_created_by_id ON public.provider_details USING btree (created_by_id);
+
+
+--
+-- Name: ix_provider_details_history_created_by_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_provider_details_history_created_by_id ON public.provider_details_history USING btree (created_by_id);
+
+
+--
+-- Name: ix_rates_notification_type; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_rates_notification_type ON public.rates USING btree (notification_type);
+
+
+--
+-- Name: ix_returned_letters_service_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_returned_letters_service_id ON public.returned_letters USING btree (service_id);
+
+
+--
+-- Name: ix_service_callback_api_history_service_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_service_callback_api_history_service_id ON public.service_callback_api_history USING btree (service_id);
+
+
+--
+-- Name: ix_service_callback_api_history_updated_by_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_service_callback_api_history_updated_by_id ON public.service_callback_api_history USING btree (updated_by_id);
+
+
+--
+-- Name: ix_service_callback_api_service_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_service_callback_api_service_id ON public.service_callback_api USING btree (service_id);
+
+
+--
+-- Name: ix_service_callback_api_updated_by_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_service_callback_api_updated_by_id ON public.service_callback_api USING btree (updated_by_id);
+
+
+--
+-- Name: ix_service_contact_list_created_by_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_service_contact_list_created_by_id ON public.service_contact_list USING btree (created_by_id);
+
+
+--
+-- Name: ix_service_contact_list_service_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_service_contact_list_service_id ON public.service_contact_list USING btree (service_id);
+
+
+--
+-- Name: ix_service_data_retention_service_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_service_data_retention_service_id ON public.service_data_retention USING btree (service_id);
+
+
+--
+-- Name: ix_service_email_reply_to_service_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_service_email_reply_to_service_id ON public.service_email_reply_to USING btree (service_id);
+
+
+--
+-- Name: ix_service_inbound_api_history_service_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_service_inbound_api_history_service_id ON public.service_inbound_api_history USING btree (service_id);
+
+
+--
+-- Name: ix_service_inbound_api_history_updated_by_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_service_inbound_api_history_updated_by_id ON public.service_inbound_api_history USING btree (updated_by_id);
+
+
+--
+-- Name: ix_service_inbound_api_service_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE UNIQUE INDEX ix_service_inbound_api_service_id ON public.service_inbound_api USING btree (service_id);
+
+
+--
+-- Name: ix_service_inbound_api_updated_by_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_service_inbound_api_updated_by_id ON public.service_inbound_api USING btree (updated_by_id);
+
+
+--
+-- Name: ix_service_letter_contacts_service_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_service_letter_contacts_service_id ON public.service_letter_contacts USING btree (service_id);
+
+
+--
+-- Name: ix_service_permissions_permission; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_service_permissions_permission ON public.service_permissions USING btree (permission);
+
+
+--
+-- Name: ix_service_permissions_service_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_service_permissions_service_id ON public.service_permissions USING btree (service_id);
+
+
+--
+-- Name: ix_service_sms_senders_inbound_number_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE UNIQUE INDEX ix_service_sms_senders_inbound_number_id ON public.service_sms_senders USING btree (inbound_number_id);
+
+
+--
+-- Name: ix_service_sms_senders_service_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_service_sms_senders_service_id ON public.service_sms_senders USING btree (service_id);
+
+
+--
+-- Name: ix_service_whitelist_service_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_service_whitelist_service_id ON public.service_whitelist USING btree (service_id);
+
+
+--
+-- Name: ix_services_created_by_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_services_created_by_id ON public.services USING btree (created_by_id);
+
+
+--
+-- Name: ix_services_history_created_by_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_services_history_created_by_id ON public.services_history USING btree (created_by_id);
+
+
+--
+-- Name: ix_services_history_organisation_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_services_history_organisation_id ON public.services_history USING btree (organisation_id);
+
+
+--
+-- Name: ix_services_organisation_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_services_organisation_id ON public.services USING btree (organisation_id);
+
+
+--
+-- Name: ix_template_redacted_updated_by_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_template_redacted_updated_by_id ON public.template_redacted USING btree (updated_by_id);
+
+
+--
+-- Name: ix_templates_created_by_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_templates_created_by_id ON public.templates USING btree (created_by_id);
+
+
+--
+-- Name: ix_templates_history_created_by_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_templates_history_created_by_id ON public.templates_history USING btree (created_by_id);
+
+
+--
+-- Name: ix_templates_history_process_type; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_templates_history_process_type ON public.templates_history USING btree (process_type);
+
+
+--
+-- Name: ix_templates_history_service_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_templates_history_service_id ON public.templates_history USING btree (service_id);
+
+
+--
+-- Name: ix_templates_process_type; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_templates_process_type ON public.templates USING btree (process_type);
+
+
+--
+-- Name: ix_templates_service_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_templates_service_id ON public.templates USING btree (service_id);
+
+
+--
+-- Name: ix_users_auth_type; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_users_auth_type ON public.users USING btree (auth_type);
+
+
+--
+-- Name: ix_users_email_address; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE UNIQUE INDEX ix_users_email_address ON public.users USING btree (email_address);
+
+
+--
+-- Name: ix_users_name; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_users_name ON public.users USING btree (name);
+
+
+--
+-- Name: ix_verify_codes_user_id; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE INDEX ix_verify_codes_user_id ON public.verify_codes USING btree (user_id);
+
+
+--
+-- Name: uix_service_to_key_name; Type: INDEX; Schema: public; Owner: root
+--
+
+CREATE UNIQUE INDEX uix_service_to_key_name ON public.api_keys USING btree (service_id, name) WHERE (expiry_date IS NULL);
+
+
+--
+-- Name: annual_billing annual_billing_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.annual_billing
+    ADD CONSTRAINT annual_billing_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: api_keys api_keys_key_type_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.api_keys
+    ADD CONSTRAINT api_keys_key_type_fkey FOREIGN KEY (key_type) REFERENCES public.key_types(name);
+
+
+--
+-- Name: api_keys api_keys_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.api_keys
+    ADD CONSTRAINT api_keys_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: broadcast_event broadcast_event_broadcast_message_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.broadcast_event
+    ADD CONSTRAINT broadcast_event_broadcast_message_id_fkey FOREIGN KEY (broadcast_message_id) REFERENCES public.broadcast_message(id);
+
+
+--
+-- Name: broadcast_event broadcast_event_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.broadcast_event
+    ADD CONSTRAINT broadcast_event_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: broadcast_message broadcast_message_approved_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.broadcast_message
+    ADD CONSTRAINT broadcast_message_approved_by_id_fkey FOREIGN KEY (approved_by_id) REFERENCES public.users(id);
+
+
+--
+-- Name: broadcast_message broadcast_message_cancelled_by_api_key_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.broadcast_message
+    ADD CONSTRAINT broadcast_message_cancelled_by_api_key_id_fkey FOREIGN KEY (cancelled_by_api_key_id) REFERENCES public.api_keys(id);
+
+
+--
+-- Name: broadcast_message broadcast_message_cancelled_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.broadcast_message
+    ADD CONSTRAINT broadcast_message_cancelled_by_id_fkey FOREIGN KEY (cancelled_by_id) REFERENCES public.users(id);
+
+
+--
+-- Name: broadcast_message broadcast_message_created_by_api_key_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.broadcast_message
+    ADD CONSTRAINT broadcast_message_created_by_api_key_id_fkey FOREIGN KEY (created_by_api_key_id) REFERENCES public.api_keys(id);
+
+
+--
+-- Name: broadcast_message broadcast_message_created_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.broadcast_message
+    ADD CONSTRAINT broadcast_message_created_by_id_fkey FOREIGN KEY (created_by_id) REFERENCES public.users(id);
+
+
+--
+-- Name: broadcast_message broadcast_message_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.broadcast_message
+    ADD CONSTRAINT broadcast_message_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: broadcast_message broadcast_message_status_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.broadcast_message
+    ADD CONSTRAINT broadcast_message_status_fkey FOREIGN KEY (status) REFERENCES public.broadcast_status_type(name);
+
+
+--
+-- Name: broadcast_message broadcast_message_template_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.broadcast_message
+    ADD CONSTRAINT broadcast_message_template_id_fkey FOREIGN KEY (template_id, template_version) REFERENCES public.templates_history(id, version);
+
+
+--
+-- Name: broadcast_provider_message broadcast_provider_message_broadcast_event_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.broadcast_provider_message
+    ADD CONSTRAINT broadcast_provider_message_broadcast_event_id_fkey FOREIGN KEY (broadcast_event_id) REFERENCES public.broadcast_event(id);
+
+
+--
+-- Name: broadcast_provider_message_number broadcast_provider_message_nu_broadcast_provider_message_i_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.broadcast_provider_message_number
+    ADD CONSTRAINT broadcast_provider_message_nu_broadcast_provider_message_i_fkey FOREIGN KEY (broadcast_provider_message_id) REFERENCES public.broadcast_provider_message(id);
+
+
+--
+-- Name: complaints complaints_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.complaints
+    ADD CONSTRAINT complaints_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: domain domain_organisation_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.domain
+    ADD CONSTRAINT domain_organisation_id_fkey FOREIGN KEY (organisation_id) REFERENCES public.organisation(id);
+
+
+--
+-- Name: email_branding email_branding_brand_type_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.email_branding
+    ADD CONSTRAINT email_branding_brand_type_fkey FOREIGN KEY (brand_type) REFERENCES public.branding_type(name);
+
+
+--
+-- Name: email_branding_to_organisation email_branding_to_organisation_email_branding_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.email_branding_to_organisation
+    ADD CONSTRAINT email_branding_to_organisation_email_branding_id_fkey FOREIGN KEY (email_branding_id) REFERENCES public.email_branding(id);
+
+
+--
+-- Name: email_branding_to_organisation email_branding_to_organisation_organisation_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.email_branding_to_organisation
+    ADD CONSTRAINT email_branding_to_organisation_organisation_id_fkey FOREIGN KEY (organisation_id) REFERENCES public.organisation(id);
+
+
+--
+-- Name: api_keys fk_api_keys_created_by_id; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.api_keys
+    ADD CONSTRAINT fk_api_keys_created_by_id FOREIGN KEY (created_by_id) REFERENCES public.users(id);
+
+
+--
+-- Name: notification_history fk_notification_history_notification_status; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.notification_history
+    ADD CONSTRAINT fk_notification_history_notification_status FOREIGN KEY (notification_status) REFERENCES public.notification_status_types(name);
+
+
+--
+-- Name: notifications fk_notifications_notification_status; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT fk_notifications_notification_status FOREIGN KEY (notification_status) REFERENCES public.notification_status_types(name);
+
+
+--
+-- Name: organisation fk_organisation_agreement_user_id; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.organisation
+    ADD CONSTRAINT fk_organisation_agreement_user_id FOREIGN KEY (agreement_signed_by_id) REFERENCES public.users(id);
+
+
+--
+-- Name: organisation fk_organisation_email_branding_id; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.organisation
+    ADD CONSTRAINT fk_organisation_email_branding_id FOREIGN KEY (email_branding_id) REFERENCES public.email_branding(id);
+
+
+--
+-- Name: organisation fk_organisation_letter_branding_id; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.organisation
+    ADD CONSTRAINT fk_organisation_letter_branding_id FOREIGN KEY (letter_branding_id) REFERENCES public.letter_branding(id);
+
+
+--
+-- Name: services fk_service_organisation; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.services
+    ADD CONSTRAINT fk_service_organisation FOREIGN KEY (organisation_id) REFERENCES public.organisation(id);
+
+
+--
+-- Name: services fk_services_created_by_id; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.services
+    ADD CONSTRAINT fk_services_created_by_id FOREIGN KEY (created_by_id) REFERENCES public.users(id);
+
+
+--
+-- Name: services fk_services_go_live_user; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.services
+    ADD CONSTRAINT fk_services_go_live_user FOREIGN KEY (go_live_user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: templates fk_templates_created_by_id; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.templates
+    ADD CONSTRAINT fk_templates_created_by_id FOREIGN KEY (created_by_id) REFERENCES public.users(id);
+
+
+--
+-- Name: inbound_numbers inbound_numbers_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.inbound_numbers
+    ADD CONSTRAINT inbound_numbers_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: inbound_sms_history inbound_sms_history_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.inbound_sms_history
+    ADD CONSTRAINT inbound_sms_history_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: inbound_sms inbound_sms_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.inbound_sms
+    ADD CONSTRAINT inbound_sms_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: invited_organisation_users invited_organisation_users_invited_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.invited_organisation_users
+    ADD CONSTRAINT invited_organisation_users_invited_by_id_fkey FOREIGN KEY (invited_by_id) REFERENCES public.users(id);
+
+
+--
+-- Name: invited_organisation_users invited_organisation_users_organisation_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.invited_organisation_users
+    ADD CONSTRAINT invited_organisation_users_organisation_id_fkey FOREIGN KEY (organisation_id) REFERENCES public.organisation(id);
+
+
+--
+-- Name: invited_organisation_users invited_organisation_users_status_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.invited_organisation_users
+    ADD CONSTRAINT invited_organisation_users_status_fkey FOREIGN KEY (status) REFERENCES public.invite_status_type(name);
+
+
+--
+-- Name: invited_users invited_users_auth_type_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.invited_users
+    ADD CONSTRAINT invited_users_auth_type_fkey FOREIGN KEY (auth_type) REFERENCES public.auth_type(name);
+
+
+--
+-- Name: invited_users invited_users_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.invited_users
+    ADD CONSTRAINT invited_users_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: invited_users invited_users_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.invited_users
+    ADD CONSTRAINT invited_users_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: jobs jobs_contact_list_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.jobs
+    ADD CONSTRAINT jobs_contact_list_id_fkey FOREIGN KEY (contact_list_id) REFERENCES public.service_contact_list(id);
+
+
+--
+-- Name: jobs jobs_created_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.jobs
+    ADD CONSTRAINT jobs_created_by_id_fkey FOREIGN KEY (created_by_id) REFERENCES public.users(id);
+
+
+--
+-- Name: jobs jobs_job_status_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.jobs
+    ADD CONSTRAINT jobs_job_status_fkey FOREIGN KEY (job_status) REFERENCES public.job_status(name);
+
+
+--
+-- Name: jobs jobs_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.jobs
+    ADD CONSTRAINT jobs_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: jobs jobs_template_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.jobs
+    ADD CONSTRAINT jobs_template_id_fkey FOREIGN KEY (template_id) REFERENCES public.templates(id);
+
+
+--
+-- Name: notification_history notification_history_api_key_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.notification_history
+    ADD CONSTRAINT notification_history_api_key_id_fkey FOREIGN KEY (api_key_id) REFERENCES public.api_keys(id);
+
+
+--
+-- Name: notification_history notification_history_job_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.notification_history
+    ADD CONSTRAINT notification_history_job_id_fkey FOREIGN KEY (job_id) REFERENCES public.jobs(id);
+
+
+--
+-- Name: notification_history notification_history_key_type_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.notification_history
+    ADD CONSTRAINT notification_history_key_type_fkey FOREIGN KEY (key_type) REFERENCES public.key_types(name);
+
+
+--
+-- Name: notification_history notification_history_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.notification_history
+    ADD CONSTRAINT notification_history_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: notification_history notification_history_templates_history_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.notification_history
+    ADD CONSTRAINT notification_history_templates_history_fkey FOREIGN KEY (template_id, template_version) REFERENCES public.templates_history(id, version);
+
+
+--
+-- Name: notifications notifications_api_key_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_api_key_id_fkey FOREIGN KEY (api_key_id) REFERENCES public.api_keys(id);
+
+
+--
+-- Name: notifications notifications_created_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_created_by_id_fkey FOREIGN KEY (created_by_id) REFERENCES public.users(id);
+
+
+--
+-- Name: notifications notifications_job_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_job_id_fkey FOREIGN KEY (job_id) REFERENCES public.jobs(id);
+
+
+--
+-- Name: notifications notifications_key_type_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_key_type_fkey FOREIGN KEY (key_type) REFERENCES public.key_types(name);
+
+
+--
+-- Name: notifications notifications_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: notifications notifications_templates_history_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_templates_history_fkey FOREIGN KEY (template_id, template_version) REFERENCES public.templates_history(id, version);
+
+
+--
+-- Name: organisation organisation_organisation_type_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.organisation
+    ADD CONSTRAINT organisation_organisation_type_fkey FOREIGN KEY (organisation_type) REFERENCES public.organisation_types(name);
+
+
+--
+-- Name: permissions permissions_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.permissions
+    ADD CONSTRAINT permissions_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: permissions permissions_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.permissions
+    ADD CONSTRAINT permissions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: provider_details provider_details_created_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.provider_details
+    ADD CONSTRAINT provider_details_created_by_id_fkey FOREIGN KEY (created_by_id) REFERENCES public.users(id);
+
+
+--
+-- Name: provider_details_history provider_details_history_created_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.provider_details_history
+    ADD CONSTRAINT provider_details_history_created_by_id_fkey FOREIGN KEY (created_by_id) REFERENCES public.users(id);
+
+
+--
+-- Name: returned_letters returned_letters_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.returned_letters
+    ADD CONSTRAINT returned_letters_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: service_broadcast_provider_restriction service_broadcast_provider_restriction_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_broadcast_provider_restriction
+    ADD CONSTRAINT service_broadcast_provider_restriction_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: service_broadcast_settings service_broadcast_settings_channel_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_broadcast_settings
+    ADD CONSTRAINT service_broadcast_settings_channel_fkey FOREIGN KEY (channel) REFERENCES public.broadcast_channel_types(name);
+
+
+--
+-- Name: service_broadcast_settings service_broadcast_settings_provider_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_broadcast_settings
+    ADD CONSTRAINT service_broadcast_settings_provider_fkey FOREIGN KEY (provider) REFERENCES public.broadcast_provider_types(name);
+
+
+--
+-- Name: service_broadcast_settings service_broadcast_settings_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_broadcast_settings
+    ADD CONSTRAINT service_broadcast_settings_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: service_callback_api service_callback_api_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_callback_api
+    ADD CONSTRAINT service_callback_api_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: service_callback_api service_callback_api_type_fk; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_callback_api
+    ADD CONSTRAINT service_callback_api_type_fk FOREIGN KEY (callback_type) REFERENCES public.service_callback_type(name);
+
+
+--
+-- Name: service_callback_api service_callback_api_updated_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_callback_api
+    ADD CONSTRAINT service_callback_api_updated_by_id_fkey FOREIGN KEY (updated_by_id) REFERENCES public.users(id);
+
+
+--
+-- Name: service_contact_list service_contact_list_created_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_contact_list
+    ADD CONSTRAINT service_contact_list_created_by_id_fkey FOREIGN KEY (created_by_id) REFERENCES public.users(id);
+
+
+--
+-- Name: service_contact_list service_contact_list_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_contact_list
+    ADD CONSTRAINT service_contact_list_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: service_data_retention service_data_retention_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_data_retention
+    ADD CONSTRAINT service_data_retention_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: service_email_branding service_email_branding_email_branding_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_email_branding
+    ADD CONSTRAINT service_email_branding_email_branding_id_fkey FOREIGN KEY (email_branding_id) REFERENCES public.email_branding(id);
+
+
+--
+-- Name: service_email_branding service_email_branding_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_email_branding
+    ADD CONSTRAINT service_email_branding_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: service_email_reply_to service_email_reply_to_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_email_reply_to
+    ADD CONSTRAINT service_email_reply_to_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: service_inbound_api service_inbound_api_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_inbound_api
+    ADD CONSTRAINT service_inbound_api_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: service_inbound_api service_inbound_api_updated_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_inbound_api
+    ADD CONSTRAINT service_inbound_api_updated_by_id_fkey FOREIGN KEY (updated_by_id) REFERENCES public.users(id);
+
+
+--
+-- Name: service_letter_branding service_letter_branding_letter_branding_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_letter_branding
+    ADD CONSTRAINT service_letter_branding_letter_branding_id_fkey FOREIGN KEY (letter_branding_id) REFERENCES public.letter_branding(id);
+
+
+--
+-- Name: service_letter_branding service_letter_branding_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_letter_branding
+    ADD CONSTRAINT service_letter_branding_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: service_letter_contacts service_letter_contacts_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_letter_contacts
+    ADD CONSTRAINT service_letter_contacts_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: service_permissions service_permissions_permission_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_permissions
+    ADD CONSTRAINT service_permissions_permission_fkey FOREIGN KEY (permission) REFERENCES public.service_permission_types(name);
+
+
+--
+-- Name: service_permissions service_permissions_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_permissions
+    ADD CONSTRAINT service_permissions_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: service_sms_senders service_sms_senders_inbound_number_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_sms_senders
+    ADD CONSTRAINT service_sms_senders_inbound_number_id_fkey FOREIGN KEY (inbound_number_id) REFERENCES public.inbound_numbers(id);
+
+
+--
+-- Name: service_sms_senders service_sms_senders_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_sms_senders
+    ADD CONSTRAINT service_sms_senders_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: service_whitelist service_whitelist_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.service_whitelist
+    ADD CONSTRAINT service_whitelist_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: services services_organisation_type_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.services
+    ADD CONSTRAINT services_organisation_type_fkey FOREIGN KEY (organisation_type) REFERENCES public.organisation_types(name);
+
+
+--
+-- Name: template_folder_map template_folder_map_template_folder_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.template_folder_map
+    ADD CONSTRAINT template_folder_map_template_folder_id_fkey FOREIGN KEY (template_folder_id) REFERENCES public.template_folder(id);
+
+
+--
+-- Name: template_folder_map template_folder_map_template_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.template_folder_map
+    ADD CONSTRAINT template_folder_map_template_id_fkey FOREIGN KEY (template_id) REFERENCES public.templates(id);
+
+
+--
+-- Name: template_folder template_folder_parent_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.template_folder
+    ADD CONSTRAINT template_folder_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES public.template_folder(id);
+
+
+--
+-- Name: template_folder template_folder_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.template_folder
+    ADD CONSTRAINT template_folder_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: template_redacted template_redacted_template_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.template_redacted
+    ADD CONSTRAINT template_redacted_template_id_fkey FOREIGN KEY (template_id) REFERENCES public.templates(id);
+
+
+--
+-- Name: template_redacted template_redacted_updated_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.template_redacted
+    ADD CONSTRAINT template_redacted_updated_by_id_fkey FOREIGN KEY (updated_by_id) REFERENCES public.users(id);
+
+
+--
+-- Name: templates_history templates_history_created_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.templates_history
+    ADD CONSTRAINT templates_history_created_by_id_fkey FOREIGN KEY (created_by_id) REFERENCES public.users(id);
+
+
+--
+-- Name: templates_history templates_history_process_type_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.templates_history
+    ADD CONSTRAINT templates_history_process_type_fkey FOREIGN KEY (process_type) REFERENCES public.template_process_type(name);
+
+
+--
+-- Name: templates_history templates_history_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.templates_history
+    ADD CONSTRAINT templates_history_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: templates_history templates_history_service_letter_contact_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.templates_history
+    ADD CONSTRAINT templates_history_service_letter_contact_id_fkey FOREIGN KEY (service_letter_contact_id) REFERENCES public.service_letter_contacts(id);
+
+
+--
+-- Name: templates templates_process_type_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.templates
+    ADD CONSTRAINT templates_process_type_fkey FOREIGN KEY (process_type) REFERENCES public.template_process_type(name);
+
+
+--
+-- Name: templates templates_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.templates
+    ADD CONSTRAINT templates_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: templates templates_service_letter_contact_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.templates
+    ADD CONSTRAINT templates_service_letter_contact_id_fkey FOREIGN KEY (service_letter_contact_id) REFERENCES public.service_letter_contacts(id);
+
+
+--
+-- Name: user_folder_permissions user_folder_permissions_template_folder_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.user_folder_permissions
+    ADD CONSTRAINT user_folder_permissions_template_folder_id_fkey FOREIGN KEY (template_folder_id, service_id) REFERENCES public.template_folder(id, service_id);
+
+
+--
+-- Name: user_folder_permissions user_folder_permissions_template_folder_id_fkey1; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.user_folder_permissions
+    ADD CONSTRAINT user_folder_permissions_template_folder_id_fkey1 FOREIGN KEY (template_folder_id) REFERENCES public.template_folder(id);
+
+
+--
+-- Name: user_folder_permissions user_folder_permissions_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.user_folder_permissions
+    ADD CONSTRAINT user_folder_permissions_user_id_fkey FOREIGN KEY (user_id, service_id) REFERENCES public.user_to_service(user_id, service_id);
+
+
+--
+-- Name: user_to_organisation user_to_organisation_organisation_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.user_to_organisation
+    ADD CONSTRAINT user_to_organisation_organisation_id_fkey FOREIGN KEY (organisation_id) REFERENCES public.organisation(id);
+
+
+--
+-- Name: user_to_organisation user_to_organisation_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.user_to_organisation
+    ADD CONSTRAINT user_to_organisation_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: user_to_service user_to_service_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.user_to_service
+    ADD CONSTRAINT user_to_service_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- Name: user_to_service user_to_service_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.user_to_service
+    ADD CONSTRAINT user_to_service_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: users users_auth_type_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_auth_type_fkey FOREIGN KEY (auth_type) REFERENCES public.auth_type(name);
+
+
+--
+-- Name: verify_codes verify_codes_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.verify_codes
+    ADD CONSTRAINT verify_codes_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: webauthn_credential webauthn_credential_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.webauthn_credential
+    ADD CONSTRAINT webauthn_credential_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- PostgreSQL database dump complete
+--
+

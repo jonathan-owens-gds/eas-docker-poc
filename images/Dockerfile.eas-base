@@ -1,0 +1,51 @@
+FROM ubuntu:20.04
+
+ARG DEBIAN_FRONTEND='noninteractive'
+ARG ENVIRONMENT='development'
+ARG PIP_DEFAULT_TIMEOUT=1000
+
+# App root required to be ENV due to start.sh script
+ENV APP_ROOT=/eas
+ENV VENV_ROOT=/venv
+ENV SHELL_CONF=/root/.bashrc
+ENV PYTHON_VERSION='python3.9'
+ENV NODE_VERSION='v16.14.0'
+ENV NVM_VERSION='v0.39.1'
+
+# Copy the bashrc file and replace existing.
+RUN mv $SHELL_CONF $SHELL_CONF.bak; cat $SHELL_CONF.bak | sed 's/\[ -z "$PS1" \] && return//' > $SHELL_CONF;
+
+# Update OS to latest.
+RUN apt-get update -y
+
+# Install commonly used tools
+RUN apt-get install wget curl git unzip vim make systemctl -y
+
+# Common installs some ca-certs and python related pre-reqs.
+RUN apt-get install ca-certificates -y
+COPY resources/forcepoint_ca.crt /usr/local/share/ca-certificates
+RUN update-ca-certificates
+
+# Install OpenSSL libs.
+RUN apt-get install libcurl4-openssl-dev libssl-dev -y
+
+# Prequisites for bdist_wheel
+RUN apt-get install build-essential -y
+
+# Install Python and VENV.
+RUN apt-get install $PYTHON_VERSION $PYTHON_VERSION-venv python3-pip libpython3.9-dev -y && mkdir $VENV_ROOT
+
+# Install AWS CLI
+RUN if [ $ENVIRONMENT = 'development' ]; then curl 'https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip' -o 'awscliv2.zip';  else echo 'Ignoring develpment tools'; fi
+RUN if [ $ENVIRONMENT = 'development' ]; then unzip 'awscliv2.zip' && ./aws/install; else echo 'Ignoring develpment tools'; fi
+
+# Install Node JS with NVM.
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/$NVM_VERSION/install.sh | bash
+
+# Validate the installation
+RUN . $SHELL_CONF && nvm install $NODE_VERSION && nvm use $NODE_VERSION  || echo 'Could not find node version';
+
+# Validating node installation
+RUN . $SHELL_CONF && node --version
+
+RUN mkdir -p $APP_ROOT
