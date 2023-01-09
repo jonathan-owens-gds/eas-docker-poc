@@ -23,4 +23,4 @@ RUN echo 'fujitsu.com' >> $APP_ROOT/emergency-alerts-admin/app/utils/email_domai
 
 # CMD bash $APP_ROOT/start.sh $APP_NAME
 CMD . /venv/eas-admin/bin/activate && cd /eas/emergency-alerts-admin && . /eas/emergency-alerts-admin/environment.sh && flask run -p 6012 --host=0.0.0.0
-EXPOSE 6012/tcp
+EXPOSE 6012

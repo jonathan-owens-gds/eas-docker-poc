@@ -4,9 +4,6 @@ FROM 684138814448.dkr.ecr.eu-west-1.amazonaws.com/eas-base:latest
 RUN apt-get install lsb-release -y && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/postgresql.gpg && echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" | tee /etc/apt/sources.list.d/pgdg.list
 RUN apt-get update -y; apt-get install postgresql-11 libpq-dev -y
 
-# Copy startup script
-# COPY resources/startdb.sh $APP_ROOT/
-
 # Copy postgresql configuration file
 COPY config/postgres/pg_hba.conf /etc/postgresql/11/main/pg_hba.conf
 COPY config/postgres/postgresql.conf /etc/postgresql/11/main/postgresql.conf
