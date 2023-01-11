@@ -1,4 +1,4 @@
-export NOTIFY_ENVIRONMENT='development'
+export NOTIFY_ENVIRONMENT='decoupled'
 
 export FLASK_APP=application.py
 export FLASK_DEBUG=False

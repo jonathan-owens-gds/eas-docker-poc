@@ -5,7 +5,7 @@ ENV VENV=$VENV_ROOT/$APP_NAME
 
 # Create root directory and clone repos
 RUN git clone --depth 1 https://github.com/alphagov/emergency-alerts-utils.git $APP_ROOT/emergency-alerts-utils
-RUN git clone --depth 1 https://github.com/alphagov/emergency-alerts-api.git $APP_ROOT/emergency-alerts-api
+RUN git clone -b EAS-470-decoupled-config --depth 1 https://github.com/alphagov/emergency-alerts-api.git $APP_ROOT/emergency-alerts-api
 
 # Copy configuration files
 COPY config/api/ $APP_ROOT/emergency-alerts-api/
